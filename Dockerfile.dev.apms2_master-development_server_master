@@ -1,0 +1,2 @@
+FROM bpmspace/apms2:Dockerfile.dev.apms2_master-development_server_master
+COPY . /var/www/html/APMS_test/

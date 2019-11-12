@@ -1,0 +1,23 @@
+Options +FollowSymLinks
+RewriteEngine On
+
+# redirect from www to non-www
+RewriteCond %{SERVER_NAME} ^www\.(.*)$ [NC]
+#RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+RewriteRule ^(.*)$ %{REQUEST_SCHEME}://%1/$1 [R=301,L]
+
+#Prevent Users From Accessing .inc.php files in .htaccess
+<Files ~ ".inc.php$">
+Order allow,deny
+Deny from all
+</Files>
+
+
+# check if file exist
+RewriteCond %{REQUEST_FILENAME} !-f
+# check if directory exist
+RewriteCond %{REQUEST_FILENAME} !-d
+# if not redirect to /
+RewriteRule ^ ./ [L]
+ErrorDocument 404 /404
+

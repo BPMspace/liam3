@@ -1,0 +1,2 @@
+FROM bpmspace/apms2:apms2_dev-development_server_master
+COPY . /var/www/html/APMS_test/
