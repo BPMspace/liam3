@@ -56,18 +56,17 @@ body {overflow-x: hidden;}
 .btnDisabled:hover {background-color: none !important; cursor: default;}
 
 /* State-Colors */
-.state1 {background-color: hsl(329, 50%, 15%); color: white;}
-.state2 {background-color: hsl(329, 50%, 20%); color: white;}
-.state3 {background-color: hsl(329, 50%, 25%); color: white;}
-.state4 {background-color: hsl(329, 50%, 30%); color: white;}
-.state5 {background-color: hsl(112, 50%, 15%); color: white;}
-.state6 {background-color: hsl(112, 50%, 20%); color: white;}
-.state7 {background-color: hsl(112, 50%, 25%); color: white;}
-.state8 {background-color: hsl(112, 50%, 30%); color: white;}
-.state9 {background-color: hsl(290, 50%, 15%); color: white;}
-.state10 {background-color: hsl(290, 50%, 20%); color: white;}
-.state11 {background-color: hsl(290, 50%, 25%); color: white;}
-.state12 {background-color: hsl(290, 50%, 30%); color: white;}
+.state1 {background-color: hsl(341, 50%, 15%); color: white;}
+.state2 {background-color: hsl(341, 50%, 20%); color: white;}
+.state4 {background-color: hsl(341, 50%, 25%); color: white;}
+.state5 {background-color: hsl(325, 50%, 15%); color: white;}
+.state6 {background-color: hsl(325, 50%, 20%); color: white;}
+.state7 {background-color: hsl(325, 50%, 25%); color: white;}
+.state8 {background-color: hsl(325, 50%, 30%); color: white;}
+.state9 {background-color: hsl(208, 50%, 15%); color: white;}
+.state10 {background-color: hsl(208, 50%, 20%); color: white;}
+.state11 {background-color: hsl(208, 50%, 25%); color: white;}
+.state12 {background-color: hsl(208, 50%, 30%); color: white;}
 .state13 {background-color: #328332; color: white;}
 .state14 {background-color: #8b0000; color: white;}
 .state15 {background-color: #328332; color: white;}

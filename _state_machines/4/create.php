@@ -28,7 +28,7 @@ foreach ($allRows["records"] as $row) {
     //--- Check if create, and already exists => set to select and exit
     if ($isCreateScript && $row[$fkcol1][$k1] == $myID1 && $row[$fkcol2][$k2] == $myID2) {
         // Set Row to selected
-        api(['cmd'=>'makeTransition', 'param'=>['table'=>$tablename, 'row'=>[$priColname=>$ID, 'state_id'=>13]]]);
+        api(['cmd'=>'makeTransition', 'param'=>['table'=>$tablename, 'row'=>[$priColname=>$ID, 'state_id'=>-1]]]);
         $allow = false;
     }
 }

@@ -38,8 +38,7 @@
                 "field_type": "state"
             }
         },
-        "table_icon": "\u003Ci class=\u0022far fa-envelope\u0022\u003E\u003C\/i\u003E",
-        "showKids": false
+        "table_icon": "\u003Ci class=\u0022far fa-envelope\u0022\u003E\u003C\/i\u003E"
     },
     "liam3_loginattempts": {
         "table_alias": "Loginattempts",
@@ -155,6 +154,19 @@
                 "col_order": 6,
                 "mode_form": "hi",
                 "field_type": "state"
+            },
+            "virtualCol": {
+                "field_type": "reversefk",
+                "column_alias": "Mails",
+                "show_in_grid": false,
+                "mode_form": "rw",
+                "col_order": 3,
+                "is_virtual": true,
+                "is_primary": false,
+                "virtual_select": "",
+                "revfk_tablename": "liam3_user_email",
+                "revfk_colname1": "liam3_User_id_fk_164887",
+                "revfk_colname2": "liam3_email_id_fk_396224"
             }
         },
         "table_icon": "\u003Ci class=\u0022fa fa-user\u0022\u003E\u003C\/i\u003E",
@@ -218,7 +230,8 @@
                 "field_type": "state"
             }
         },
-        "table_icon": ""
+        "table_icon": "",
+        "showKids": false
     },
     "liam3_user_loginattempt": {
         "table_alias": "User-Loginattempt",
