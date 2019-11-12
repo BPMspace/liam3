@@ -18,7 +18,6 @@ CREATE TABLE `liam3_user` (
   `liam3_User_lastname` VARCHAR(60) NULL DEFAULT NULL,
   `liam3_User_password` MEDIUMTEXT NULL DEFAULT NULL,
   `liam3_User_salt` MEDIUMTEXT NULL DEFAULT NULL,
-KEY (),
   PRIMARY KEY (`liam3_User_id`)
 );
 
@@ -35,8 +34,7 @@ CREATE TABLE `liam3_user_email` (
   `liam3_email_id_fk_396224` INT(11) NULL DEFAULT NULL,
   PRIMARY KEY (`liam3_User_email_id`),
 KEY (`liam3_email_id_fk_396224`),
-KEY (`liam3_User_id_fk_164887`),
-KEY ()
+KEY (`liam3_User_id_fk_164887`)
 );
 
 -- ---
@@ -49,7 +47,6 @@ DROP TABLE IF EXISTS `liam3_email`;
 CREATE TABLE `liam3_email` (
   `liam3_email_id` INT(11) NOT NULL AUTO_INCREMENT,
   `liam3_email_text` VARCHAR(254) NULL DEFAULT NULL,
-KEY (),
   PRIMARY KEY (`liam3_email_id`)
 );
 
@@ -82,6 +79,7 @@ CREATE TABLE `liam3_loginattempts` (
   `liam3_LoginAttempts_info` MEDIUMTEXT NULL DEFAULT NULL,
   PRIMARY KEY (`liam3_LoginAttempts_id`)
 );
+
 
 -- ---
 -- Foreign Keys 
