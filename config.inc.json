@@ -1,0 +1,544 @@
+{
+    "liam3_email": {
+        "table_alias": "Email",
+        "table_type": "obj",
+        "order": 1,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "liam3_email_text",
+        "in_menu": true,
+        "se_active": true,
+        "stateIdSel": 0,
+        "columns": {
+            "liam3_email_id": {
+                "column_alias": "Email id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": false,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "liam3_email_text": {
+                "column_alias": "Text",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "text"
+            },
+            "state_id": {
+                "column_alias": "State id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "hi",
+                "field_type": "state"
+            }
+        },
+        "table_icon": "\u003Ci class=\u0022far fa-envelope\u0022\u003E\u003C\/i\u003E",
+        "showKids": false
+    },
+    "liam3_loginattempts": {
+        "table_alias": "Loginattempts",
+        "table_type": "obj",
+        "order": 2,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "liam3_LoginAttempts_id,DESC",
+        "in_menu": true,
+        "se_active": true,
+        "stateIdSel": 0,
+        "columns": {
+            "liam3_LoginAttempts_id": {
+                "column_alias": "LoginAttempts id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "liam3_LoginAttempts_time": {
+                "column_alias": "Time",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "datetime"
+            },
+            "liam3_LoginAttempts_info": {
+                "column_alias": "Info",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "textarea"
+            },
+            "state_id": {
+                "column_alias": "State id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 4,
+                "mode_form": "hi",
+                "field_type": "state"
+            }
+        },
+        "table_icon": "\u003Ci class=\u0022fa fa-sign-in-alt\u0022\u003E\u003C\/i\u003E"
+    },
+    "liam3_user": {
+        "table_alias": "User",
+        "table_type": "obj",
+        "order": 3,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "liam3_User_lastname",
+        "in_menu": true,
+        "se_active": true,
+        "stateIdSel": 0,
+        "columns": {
+            "liam3_User_id": {
+                "column_alias": "User id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "liam3_User_firstname": {
+                "column_alias": "Firstname",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "text"
+            },
+            "liam3_User_lastname": {
+                "column_alias": "Lastname",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "text"
+            },
+            "liam3_User_password": {
+                "column_alias": "Password",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": false,
+                "col_order": 4,
+                "mode_form": "rw",
+                "field_type": "password"
+            },
+            "liam3_User_salt": {
+                "column_alias": "Salt",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": false,
+                "col_order": 5,
+                "mode_form": "hi",
+                "field_type": "textarea"
+            },
+            "state_id": {
+                "column_alias": "State id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 6,
+                "mode_form": "hi",
+                "field_type": "state"
+            }
+        },
+        "table_icon": "\u003Ci class=\u0022fa fa-user\u0022\u003E\u003C\/i\u003E",
+        "showKids": false
+    },
+    "liam3_user_email": {
+        "table_alias": "User-Email",
+        "table_type": "1_n",
+        "order": 4,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "liam3_User_email_id,DESC",
+        "in_menu": false,
+        "se_active": true,
+        "stateIdSel": 0,
+        "columns": {
+            "liam3_User_email_id": {
+                "column_alias": "Email id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "liam3_User_id_fk_164887": {
+                "column_alias": "164887",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "liam3_user",
+                    "col_id": "liam3_User_id",
+                    "col_subst": "*"
+                }
+            },
+            "liam3_email_id_fk_396224": {
+                "column_alias": "396224",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "liam3_email",
+                    "col_id": "liam3_email_id",
+                    "col_subst": "*"
+                }
+            },
+            "state_id": {
+                "column_alias": "State id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 4,
+                "mode_form": "hi",
+                "field_type": "state"
+            }
+        },
+        "table_icon": ""
+    },
+    "liam3_user_loginattempt": {
+        "table_alias": "User-Loginattempt",
+        "table_type": "1_n",
+        "order": 5,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "liam3_User_LoginAttempt_id,DESC",
+        "in_menu": false,
+        "se_active": true,
+        "stateIdSel": 0,
+        "columns": {
+            "liam3_User_LoginAttempt_id": {
+                "column_alias": "LoginAttempt id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "liam3_User_id_fk_955788": {
+                "column_alias": "955788",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "liam3_user",
+                    "col_id": "liam3_User_id",
+                    "col_subst": "*"
+                }
+            },
+            "liam3_LoginAttempts_id_fk_234561": {
+                "column_alias": "234561",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "liam3_loginattempts",
+                    "col_id": "liam3_LoginAttempts_id",
+                    "col_subst": "*"
+                }
+            },
+            "state_id": {
+                "column_alias": "State id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 4,
+                "mode_form": "hi",
+                "field_type": "state"
+            }
+        },
+        "table_icon": ""
+    },
+    "role": {
+        "table_alias": "Role",
+        "table_type": "obj",
+        "order": 6,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "role_id,DESC",
+        "in_menu": false,
+        "se_active": false,
+        "stateIdSel": 0,
+        "columns": {
+            "role_id": {
+                "column_alias": "Role id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "role_name": {
+                "column_alias": "Name",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "text"
+            },
+            "ConfigDiff": {
+                "column_alias": "ConfigDiff",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "textarea"
+            }
+        },
+        "table_icon": "\u003Ci class=\u0022fa fa-square\u0022\u003E\u003C\/i\u003E"
+    },
+    "role_user": {
+        "table_alias": "User",
+        "table_type": "obj",
+        "order": 7,
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "role_user_id,DESC",
+        "in_menu": false,
+        "se_active": false,
+        "stateIdSel": 0,
+        "columns": {
+            "role_user_id": {
+                "column_alias": "User id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "role_id": {
+                "column_alias": "Role id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "role",
+                    "col_id": "role_id",
+                    "col_subst": "*"
+                }
+            },
+            "user_id": {
+                "column_alias": "User id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "number"
+            }
+        },
+        "table_icon": "\u003Ci class=\u0022fa fa-square\u0022\u003E\u003C\/i\u003E"
+    },
+    "state_machines": {
+        "table_alias": "Machines",
+        "table_type": "obj",
+        "order": "100",
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "id,DESC",
+        "in_menu": true,
+        "se_active": false,
+        "stateIdSel": 0,
+        "columns": {
+            "id": {
+                "column_alias": "Id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "tablename": {
+                "column_alias": "Tablename",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "text"
+            },
+            "transition_script": {
+                "column_alias": "Script",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "textarea"
+            }
+        },
+        "table_icon": ""
+    },
+    "state": {
+        "table_alias": "State",
+        "table_type": "obj",
+        "order": "101",
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "state_id,DESC",
+        "in_menu": true,
+        "se_active": false,
+        "stateIdSel": 0,
+        "columns": {
+            "state_id": {
+                "column_alias": "State id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "name": {
+                "column_alias": "Name",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "text"
+            },
+            "entrypoint": {
+                "column_alias": "Entrypoint",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "switch"
+            },
+            "statemachine_id": {
+                "column_alias": "Statemachine id",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 4,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "state_machines",
+                    "col_id": "id",
+                    "col_subst": "{\u0022tablename\u0022: 1}"
+                }
+            },
+            "script_IN": {
+                "column_alias": "Script IN",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 5,
+                "mode_form": "rw",
+                "field_type": "textarea"
+            },
+            "script_OUT": {
+                "column_alias": "Script OUT",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 6,
+                "mode_form": "rw",
+                "field_type": "textarea"
+            }
+        },
+        "table_icon": ""
+    },
+    "state_rules": {
+        "table_alias": "Rules",
+        "table_type": "n_m",
+        "order": "102",
+        "mode": "rw",
+        "stdfilter": "",
+        "stdsorting": "state_rules_id,DESC",
+        "in_menu": true,
+        "se_active": false,
+        "stateIdSel": 0,
+        "columns": {
+            "state_rules_id": {
+                "column_alias": "Rules id",
+                "is_primary": true,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 1,
+                "mode_form": "hi",
+                "field_type": "number"
+            },
+            "state_id_FROM": {
+                "column_alias": "FROM",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 2,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "state",
+                    "col_id": "state_id",
+                    "col_subst": "{\u0022name\u0022: 1}"
+                }
+            },
+            "state_id_TO": {
+                "column_alias": "Id TO",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 3,
+                "mode_form": "rw",
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "state",
+                    "col_id": "state_id",
+                    "col_subst": "{\u0022name\u0022: 1}"
+                }
+            },
+            "transition_script": {
+                "column_alias": "Script",
+                "is_primary": false,
+                "is_virtual": false,
+                "show_in_grid": true,
+                "col_order": 4,
+                "mode_form": "rw",
+                "field_type": "textarea"
+            }
+        },
+        "table_icon": ""
+    }
+}
