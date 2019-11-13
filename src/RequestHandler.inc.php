@@ -402,6 +402,11 @@
     //=======================================================
     // [GET] Reading
     public function init() {
+      //-- Check Rights
+      if (is_null($this->token))
+        die(fmtError("Token not avaialable."));
+      else if (!property_exists($this->token, "uid"))
+        die(fmtError("You are not a User!"));
       $config = $this->getConfigByRoleID($this->token->uid);
       $res = ["user" => $this->token, "tables" => $config];
       return json_encode($res);
@@ -429,8 +434,13 @@
       //-- Check Rights (only for Table!)
       if (!is_null($tablename)) {
         if (!is_null($this->token)){
-          $allowedTablenames = array_keys($this->getConfigByRoleID($this->token->uid));
-          if (!in_array($tablename, $allowedTablenames)) die(fmtError('No access to this Table!'));        
+          // User or NOT ?
+          if (property_exists($this->token, "uid")) {
+            $allowedTablenames = array_keys($this->getConfigByRoleID($this->token->uid));
+            if (!in_array($tablename, $allowedTablenames)) die(fmtError('No access to this Table!'));        
+          } else {
+            die(fmtError('No access to this Table!')); 
+          }
         }
       }
       if (!is_null($view)) $tablename = $view; // Same Select as normal Table
@@ -824,4 +834,97 @@
       else 
         return fmtError("Transition not possible!");
     }
+
+    public function login($param) {
+      define('EMAIL_STATE_VERIFIED', 2);
+      define('USER_STATE_COMPLETE', 10);
+      define('USER_EMAIL_STATE_USE', 13);
+      //-- Check Rights
+      if (!is_null($this->token)){
+        // User or NOT ?
+        if (property_exists($this->token, "permissions")) {
+          $permissions = $this->token->permissions;
+          if (in_array("login", $permissions)) {
+
+            $email = $param["email"];
+            $password = $param["password"];
+
+            // only valid for Liam3
+            $tMail = json_decode(api(["cmd"=>"read","param"=>["table"=>"liam3_email", "filter"=>'{"=":["liam3_email_text","'.$email.'"]}']]), true);
+            if (count($tMail["records"]) == 1) {
+              // Mail OK
+              $tMail = $tMail["records"];
+              //Check Email State
+              if ($tMail[0]['state_id'] == EMAIL_STATE_VERIFIED) {
+                $email_id = $tMail[0]['liam3_email_id'];
+              } else {
+                  $error = 'Email is not verified';
+                  /*
+                  TODO: Login Attempts function
+                  $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                  $result = api(json_encode(array(
+                          "cmd" => "create",
+                          "param" => array(
+                              "table" => "liam3_LoginAttempts",
+                              "row" => array(
+                                  "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                  "liam3_LoginAttempts_info" => $login_attempt_info
+                              )
+                          )
+                      )
+                  ));*/
+                  die(fmtError($error));
+              }
+              //Check if email is connected with a user
+              $email_user = json_decode(api(["cmd"=>"read","param"=>["table"=>"liam3_user_email", "filter"=>'{"=":["liam3_email_text","'.$email.'"]}']]), true);
+              if ($email_user && ($email_user['records'][0]['state_id'] == USER_EMAIL_STATE_USE)) {
+                $user_id = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+              } else {
+                  $error = 'This email is unselected.';
+                  die(fmtError($error));
+                  $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+              }
+              //Check the user state
+              if (($email_user['records'][0]['liam3_User_id_fk_164887']['state_id'] != USER_STATE_COMPLETE)) {
+                $error = 'The state of this user is not complete';
+                die(fmtError($error));
+                $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+              }
+              //Check if password is correct.
+              $salt = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_salt'];
+              $hashedPassword = hash('sha512', $password . $salt);
+              if ($hashedPassword != $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_password']) {
+                  $error = 'Wrong password.';
+                  die(fmtError($error));
+                  $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                  /*
+                  api(json_encode(array(
+                          "cmd" => "create",
+                          "param" => array(
+                              "table" => "liam3_LoginAttempts",
+                              "row" => array(
+                                  "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                  "liam3_LoginAttempts_info" => $login_attempt_info
+                              )
+                          )
+                      )
+                  ));
+                  */
+              }
+              
+
+
+
+              $result = ["login_valid" => true];
+              return json_encode($result, true);
+
+
+            } else
+              die(fmtError('Mail does not exist!'));
+          }
+        }
+      }
+      die(fmtError('No access!'));
+    }
+
   }

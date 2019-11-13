@@ -28,12 +28,11 @@
       die(json_encode(['error' => ['msg' => "Please use a Token for authentication."]]));
     }
     // Token is valid but expired?
-    // TODO: Only set iss timestamp in Token!!!
-    if (property_exists($tokendata, "exp")) {
-      if (($tokendata->exp - time()) <= 0) {
-        http_response_code(401);
-        die(json_encode(['error' => ['msg' => "This Token has expired. Please renew your Token."]]));
-      }
+    // iss timestamp in Token
+    define('TOKEN_EXP_TIME', 60 * 1000);
+    if ((time() - $tokendata->iat) >= TOKEN_EXP_TIME) {
+      http_response_code(401);
+      die(json_encode(['error' => ['msg' => "This Token has expired. Please renew your Token."]]));
     }
   }
   //========================================= Parameter & Handling
