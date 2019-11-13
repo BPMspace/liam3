@@ -911,11 +911,22 @@
                   ));
                   */
               }
-              
 
+              // TODO: Create Token for Serices (LIAM, SQMS, COMS)
 
+              // Generate User-Token
+              $token_data = array();
+              $token_data['iss'] = "liam3";
+              $token_data['iat'] = time();
+              $token_data['permissions'] = ["everything"];
+              $token_data['uid'] = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+              $token = JWT::encode($token_data, AUTH_KEY);
 
-              $result = ["login_valid" => true];
+              $result = [
+                "login_valid" => true,
+                "token" => $token
+              ];
+
               return json_encode($result, true);
 
 

@@ -77,6 +77,9 @@ class DB {
         }
         fetch(url, {
             method: HTTPMethod,
+            headers: {
+                'Authorization': 'Bearer '+token
+            }, 
             body: HTTPBody,
             credentials: 'same-origin'
         }).then(response => {

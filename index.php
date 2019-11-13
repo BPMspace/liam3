@@ -1,4 +1,5 @@
 <?php
+  session_start();
   // Includes
   require_once(__DIR__."/src/AuthHandler.inc.php");
   include_once(__DIR__."/src/RequestHandler.inc.php");
@@ -55,11 +56,8 @@
   }
   // If Token is not in Cookie -> save Token in a Cookie
   if (is_null(JWT::getBearerToken())) {
-    // Save Cookie for 30 days
-    setcookie("token", $rawtoken, time()+(3600 * 24 * 30), "", "", false, true);
-    header("Location: ".dirname($_SERVER["PHP_SELF"])); // Redirect to remove ugly URL
-    exit();
+    // Success
+    $content = file_get_contents(__DIR__.'/content.inc.html');
+    $content = str_replace("____tokendata_____", $rawtoken, $content);
+    echo $content;
   }
-
-  // Success
-  require_once("content.inc.html");
