@@ -20,7 +20,7 @@
     // Has to be authenicated via a external token
     $rawtoken = JWT::getBearerToken();
     try {
-      $tokendata = JWT::decode($rawtoken, AUTH_KEY); 
+      $tokendata = JWT::decode($rawtoken, AUTH_KEY);
     }
     catch (Exception $e) {
       // Invalid Token!
