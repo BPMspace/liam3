@@ -198,6 +198,11 @@
   class RequestHandler {
     private $token = null;
 
+    const EMAIL_STATE_NOT_VERIFIED = 1;
+    const EMAIL_STATE_VERIFIED = 2;
+    const USER_STATE_COMPLETE = 10;
+    const USER_EMAIL_STATE_USE = 13;
+
     public function __construct($tokendata = null) {
       $this->token = $tokendata;
     }
@@ -836,9 +841,9 @@
     }
 
     public function login($param) {
-      define('EMAIL_STATE_VERIFIED', 2);
+      /*define('EMAIL_STATE_VERIFIED', 2);
       define('USER_STATE_COMPLETE', 10);
-      define('USER_EMAIL_STATE_USE', 13);
+      define('USER_EMAIL_STATE_USE', 13);*/
       //-- Check Rights
       if (!is_null($this->token)){
         // User or NOT ?
@@ -855,7 +860,7 @@
               // Mail OK
               $tMail = $tMail["records"];
               //Check Email State
-              if ($tMail[0]['state_id'] == EMAIL_STATE_VERIFIED) {
+              if ($tMail[0]['state_id'] == self::EMAIL_STATE_VERIFIED) {
                 $email_id = $tMail[0]['liam3_email_id'];
               } else {
                   $error = 'Email is not verified';
@@ -877,7 +882,7 @@
               }
               //Check if email is connected with a user
               $email_user = json_decode(api(["cmd"=>"read","param"=>["table"=>"liam3_user_email", "filter"=>'{"=":["liam3_email_text","'.$email.'"]}']]), true);
-              if ($email_user && ($email_user['records'][0]['state_id'] == USER_EMAIL_STATE_USE)) {
+              if ($email_user && ($email_user['records'][0]['state_id'] == self::USER_EMAIL_STATE_USE)) {
                 $user_id = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
               } else {
                   $error = 'This email is unselected.';
@@ -885,7 +890,7 @@
                   $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
               }
               //Check the user state
-              if (($email_user['records'][0]['liam3_User_id_fk_164887']['state_id'] != USER_STATE_COMPLETE)) {
+              if (($email_user['records'][0]['liam3_User_id_fk_164887']['state_id'] != self::USER_STATE_COMPLETE)) {
                 $error = 'The state of this user is not complete';
                 die(fmtError($error));
                 $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
@@ -937,5 +942,195 @@
       }
       die(fmtError('No access!'));
     }
+
+      public function selfRegister($param) {
+          //-- Check Rights
+          if (!is_null($this->token)){
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                        $liam3_url = $param["liam3_url"];
+                        $email = $param["email"];
+                        $origin = $param["origin"];
+                        $firstname = $param["firstname"];
+                        $lastname = $param["lastname"];
+                        $email_id = $param["email_id"];
+
+                      if ($email_id) {
+                          $result = [1,2];
+                      } else {
+                          $result = json_decode(api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_email",
+                                      "row" => array(
+                                          "liam3_email_text" => $email
+                                      )
+                                  )
+                              )
+                          ), true);
+                      }
+                      if (count($result) > 1) {
+                          if ($email_id) {
+                              $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
+                                  "filter" => '{"and":[{"=":[ "liam3_email_id" ,'.$email_id.']},{"!=":[ "state_id",'.self::EMAIL_STATE_NOT_VERIFIED.']}]}'))), true);
+                              if (!$check_email) die(fmtError('This email is already verified or blocked.'));
+                          }
+                              if (!$email_id) $email_id = $result[1]['element_id'];
+                              $jwt_key = AUTH_KEY;
+                              $jwt_token = array(
+                                  "iss" => "liam3",
+                                  "aud" => $email_id,
+                                  "iat" => time(),
+                                  "exp" => time() + 10800
+                              );
+
+                              /**
+                               * IMPORTANT:
+                               * You must specify supported algorithms for your application. See
+                               * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                               * for a list of spec-compliant algorithms.
+                               */
+                              $jwt = JWT::encode($jwt_token, $jwt_key);
+
+                              // Mail Content
+                              $subject = "Please confirm your Mail Adress";
+                              $user_info = '&firstname=' . $firstname . '&lastname=' . $lastname;
+                              $link = $liam3_url . "/LIAM3_Client_register.php?token=" . $jwt . "&origin=" . $origin . $user_info;
+                              $msg = "Hello, First line of text \n Second line of text <a href=$link>Click here to confirm your email</a>";
+                              $msg = str_replace('$link', $link, $msg);
+                              // Format and Send Mail
+                              $msg = wordwrap($msg, 70);
+                              if (!mail($email, $subject, $msg)) {
+                                  die(fmtError($result[0]['The email can\'t be send.']));
+                              }
+                              //mail($email, $subject, $msg);
+                              $result = [
+                                "message" => 'A verification link has been sent to your email address.'
+                              ];
+                              return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      public function register($param) {
+          //-- Check Rights
+          if (!is_null($this->token)){
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $email_id = $param["email_id"];
+                      if (isset($param["check_email"])) {
+                          $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
+                              "filter" => '{"and":[{"=":[ "liam3_email_id" ,'.$email_id.']},{"!=":[ "state_id",'.self::EMAIL_STATE_NOT_VERIFIED.']}]}'))), true);
+                          if ($check_email['count']) {
+                              die(fmtError('This email is already verified or blocked.'));
+                          } else {
+                              return true;
+                          }
+                      } else {
+                          $password = $param["password"];
+                          $firstname = $param["firstname"];
+                          $lastname = $param["lastname"];
+                          $result = api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_user",
+                                      "row" => array(
+                                          "liam3_User_firstname" => $firstname,
+                                          "liam3_User_lastname" => $lastname,
+                                          "liam3_User_password" => $password,
+                                          "liam3_User_email_id" => $email_id
+                                      )
+                                  )
+                              )
+                          );
+                          try {
+                              $result = json_decode($result, true);
+                          } catch (Exception $e) {
+                              die(fmtError($e->getMessage()));
+                          }
+                          //return json_encode($result, true);
+                          if (count($result) > 1) {
+                              $user_id = $result[1]['element_id'];
+                              $result = api(array(
+                                      "cmd" => "makeTransition",
+                                      "param" => array(
+                                          "table" => "liam3_email",
+                                          "row" => array(
+                                              "liam3_email_id" => $email_id,
+                                              "state_id" => self::EMAIL_STATE_VERIFIED
+                                          )
+                                      )
+                                  )
+                              );
+                              try {
+                                  $result = json_decode($result, true);
+                              } catch (Exception $e) {
+                                  die(fmtError($e->getMessage()));
+                              }
+                                  if ($result && count($result) > 2) {
+                                      $result = api(array(
+                                          "cmd" => "create",
+                                          "param" => array(
+                                              "table" => "liam3_user_email",
+                                              "row" => [
+                                                  "liam3_User_id_fk_164887" => $user_id,
+                                                  "liam3_email_id_fk_396224" => $email_id]
+                                          )
+                                      ));
+                                      try {
+                                          $result = json_decode($result, true);
+                                      } catch (Exception $e) {
+                                          die(fmtError($e->getMessage()));
+                                      }
+                                      $result = api(array(
+                                              "cmd" => "makeTransition",
+                                              "param" => array(
+                                                  "table" => "liam3_user",
+                                                  "row" => array(
+                                                      "liam3_User_id" => $user_id,
+                                                      "state_id" => self::USER_STATE_COMPLETE
+                                                  )
+                                              )
+                                          )
+                                      );
+                                      try {
+                                          $result = json_decode($result, true);
+                                      } catch (Exception $e) {
+                                          die(fmtError($e->getMessage()));
+                                      }
+                                      if (isset($_GET['origin']) && $_GET['origin']) {
+                                          header('Location: http:' . $_GET['origin']);
+                                          exit();
+                                      }
+                                      $result = [
+                                          "showForm" => true
+                                      ];
+                                      return json_encode($result, true);
+                                  } else {
+                                      die(fmtError('This email is already verified or blocked.'));
+                                  }
+
+                          } else {
+                              $result = [
+                                  "showForm" => true,
+                                  "message" => $result[0]['message']
+                              ];
+                              return json_encode($result, true);
+                          }
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
 
   }

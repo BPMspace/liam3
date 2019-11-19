@@ -29,7 +29,7 @@
     }
     // Token is valid but expired?
     // iss timestamp in Token
-    define('TOKEN_EXP_TIME', 60 * 1000);
+    define('TOKEN_EXP_TIME', 60 * 10000000);
     if ((time() - $tokendata->iat) >= TOKEN_EXP_TIME) {
       http_response_code(401);
       die(json_encode(['error' => ['msg' => "This Token has expired. Please renew your Token."]]));

@@ -1,8 +1,8 @@
 <?php
 	//echo "---TRANSITION--->";
-	
+
 	// [Hash Password]
-$param['row']['liam3_User_firstname'] = trim($param['row']['liam3_User_firstname']);
+/*$param['row']['liam3_User_firstname'] = trim($param['row']['liam3_User_firstname']);
 $param['row']['liam3_User_lastname'] = trim($param['row']['liam3_User_lastname']);
 $data = $param['row'];
 $allow = false;
@@ -38,7 +38,7 @@ if ($data['liam3_User_firstname'] && $data['liam3_User_lastname'] && $data['liam
 }
 
 // Create E-Mail
-/*
+
 if (isset($data['new_email']) && $data['new_email'] && $allow) {
     $result = api(array(
         "cmd" => "create",
@@ -68,10 +68,10 @@ if (isset($data['new_email']) && $data['new_email'] && $allow) {
     $allow = false;
     if (!$msg || $msg == 'OK') $msg = 'Please enter all the fields';
 }
-*/
+
 
 $script_result = array(
     "allow_transition" => $allow,
     "show_message" => true,
     "message" => $msg
-);
+);*/
