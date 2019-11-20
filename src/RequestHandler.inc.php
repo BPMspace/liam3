@@ -201,6 +201,7 @@
     const EMAIL_STATE_NOT_VERIFIED = 1;
     const EMAIL_STATE_VERIFIED = 2;
     const USER_STATE_COMPLETE = 10;
+    const USER_STATE_UPDATE = 11;
     const USER_EMAIL_STATE_USE = 13;
 
     public function __construct($tokendata = null) {
@@ -1002,12 +1003,13 @@
                               $msg = str_replace('$link', $link, $msg);
                               // Format and Send Mail
                               $msg = wordwrap($msg, 70);
-                              if (!mail($email, $subject, $msg)) {
+                              /*if (!mail($email, $subject, $msg)) {
                                   die(fmtError($result[0]['The email can\'t be send.']));
-                              }
+                              }*/
                               //mail($email, $subject, $msg);
                               $result = [
-                                "message" => 'A verification link has been sent to your email address.'
+                                "email_id" => $email_id,
+                                "message" => 'A verification link has been sent to your email address.'.$msg
                               ];
                               return json_encode($result, true);
                       } else {
@@ -1125,6 +1127,141 @@
                                   "message" => $result[0]['message']
                               ];
                               return json_encode($result, true);
+                          }
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      public function forgotPassword($param) {
+          //-- Check Rights
+          if (!is_null($this->token)){
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $liam3_url = $param["liam3_url"];
+                      $email_input = $param["email"];
+                      $user_email = json_decode(api(array(
+                          "cmd" => "read",
+                          "param" => array(
+                              "table" => "liam3_user_email",
+                              "filter" => '{"and":[{"=":["liam3_email_text","'.$email_input.'"]},{"=":["liam3_user_email.state_id",'.self::USER_EMAIL_STATE_USE.']}]}'
+                          )
+                      )), true);
+                      $user_email = $user_email['records'];
+                      if (!$user_email) {
+                          die(fmtError('There is no registered user with this email address'));
+                      } else {
+                          $result = json_decode(api(array(
+                              "cmd" => "read",
+                              "param" => array(
+                                  "table" => "liam3_email",
+                                  "filter" => '{"and":[{"=":[ "liam3_email_text" ,"'.$email_input.'"]},{"=":[ "state_id",'.self::EMAIL_STATE_VERIFIED.']}]}'
+                              )
+                          )), true);
+                          if (!$result) {
+                              die(fmtError('This email address is not verified'));
+                          }
+                      }
+                          $jwt_key = AUTH_KEY;
+                          $jwt_token = array(
+                              "iss" => "liam3",
+                              "aud" => $user_email[0]['liam3_User_id_fk_164887']['liam3_User_id'],
+                              "iat" => time(),
+                              "exp" => time() + 10800
+                          );
+
+                          /**
+                           * IMPORTANT:
+                           * You must specify supported algorithms for your application. See
+                           * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                           * for a list of spec-compliant algorithms.
+                           */
+                          $jwt = JWT::encode($jwt_token, $jwt_key);
+
+                          $result = api(array(
+                              "cmd" => "makeTransition",
+                              "param" => array(
+                                  "table" => "liam3_user",
+                                  "row" => array(
+                                      "liam3_User_id" => $user_email[0]['liam3_User_id_fk_164887']['liam3_User_id'],
+                                      "liam3_client_passwd_reset" => true,
+                                      "liam3_User_email" => $email_input,
+                                      "state_id" => self::USER_STATE_UPDATE
+                                  )
+                              )
+                          ));
+                          $result = json_decode($result, true);
+                          if ($result > 2) {
+                              // Mail Content
+                              $subject = "Password Reset";
+                              $link = $liam3_url . "/LIAM3_Client_reset_password.php?token=" . $jwt;
+                              $msg = "<a href=$link>Click here to reset your password</a>";
+                              $msg = str_replace('$link', $link, $msg);
+                              // Format and Send Mail
+                              $msg = wordwrap($msg, 70);
+                              //mail($email_input, $subject, $msg);
+                              $result = [
+                                  "message" => 'Password reset link is sent to this e-mail address.'.$msg
+                              ];
+                              return json_encode($result, true);
+                              /*if (mail($email_input, $subject, $msg)) {
+                                  $success = 'Password reset link sent to email.';
+                              } else {
+                                  $error = "The email can't be send";
+                              }*/
+                          }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      public function resetPassword($param) {
+          //-- Check Rights
+          if (!is_null($this->token)){
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $user_id = $param["user_id"];
+                      $password_new = $param["password_new"];
+                      $password_new_confirm = $param["password_new_confirm"];
+                      $result = json_decode(api(array(
+                          "cmd" => "read",
+                          "param" => array(
+                              "table" => "liam3_user",
+                              "filter" => '{"and":[{"=":["liam3_User_id","'.$user_id.'"]},{"=":["state_id",'.self::USER_STATE_COMPLETE.']}]}'
+                          )
+                      )), true);
+                      if ($result['records']) {
+                          die(fmtError('This link was already used. If you need to reset your passwort again, please click on the button "Forgot passwort" in the LogIn form.'));
+                      }
+                      if ($password_new) {
+                          $result = api(array(
+                              "cmd" => "makeTransition",
+                              "param" => array(
+                                  "table" => "liam3_user",
+                                  "row" => array(
+                                      "liam3_User_id" => $user_id,
+                                      "liam3_User_password_new" => $password_new,
+                                      "liam3_User_password_new_confirm" => $password_new_confirm,
+                                      "liam3_client_passwd_reset_form" => true,
+                                      "state_id" => self::USER_STATE_COMPLETE
+                                  )
+                              )
+                          ));
+                          $result = json_decode($result, true);
+                          if (count($result) > 2) {
+                              $result = [
+                                  "message" => $result[1]['message']
+                              ];
+                              return json_encode($result, true);
+                          } else {
+                              die(fmtError($result[1]['message']));
                           }
                       }
                   }
