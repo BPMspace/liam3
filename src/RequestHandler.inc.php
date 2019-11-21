@@ -1357,4 +1357,165 @@ class RequestHandler
         }
         die(fmtError('No access!'));
     }
+
+    /**
+     * @param $param
+     * @return string
+     */
+    public function addAnotherEmail($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("everything", $permissions)) {
+                    $liam3_url = $param["liam3_url"];
+                    $user_id = $param["user_id"];
+                    $email = $param["email"];
+                    $result = api(array(
+                        "cmd" => "create",
+                        "param" => array(
+                            "table" => "liam3_email",
+                            "row" => array(
+                                "liam3_email_text" => $email,
+                                "only_verify_mail" => true
+                            )
+                        )
+                    ));
+                    $result = json_decode($result, true);
+                    if (count($result) > 1) {
+                        $email_id = $result[1]['element_id'];
+                        $jwt_key = AUTH_KEY;
+                        $jwt_token = array(
+                            "iss" => "liam3",
+                            "aud" => $email_id,
+                            "iat" => time(),
+                            "exp" => time() + 10800
+                        );
+
+                        /**
+                         * IMPORTANT:
+                         * You must specify supported algorithms for your application. See
+                         * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                         * for a list of spec-compliant algorithms.
+                         */
+                        $jwt = JWT::encode($jwt_token, $jwt_key);
+                        $subject = "Verification";
+                        $link = $liam3_url . "/LIAM3_Client_verify.php?token=" . $jwt;
+                        $msg = "Please verify your mail - <a href=$link>Click here to verify your email</a>";
+                        $msg = str_replace('$link', $link, $msg);
+                        // Format and Send Mail
+                        $msg = wordwrap($msg, 70);
+                        /*if (mail($email, $subject, $msg)) {
+                            $success = 'A verification link has been sent to your email address.';
+                        } else {
+                            $error = "The email can't be send";
+                        }*/
+                        //mail($email, $subject, $msg);
+                        $success = 'A verification link has been sent to your email address.';
+                    } else {
+                        die(fmtError($result[0]['message']));
+                    }
+                    if (isset($success)) {
+                        $email_id = $result[1]["element_id"];
+                        $result = api(array(
+                            "cmd" => "create",
+                            "param" => array(
+                                "table" => "liam3_user_email",
+                                "row" => [
+                                    "liam3_User_id_fk_164887" => $user_id,
+                                    "liam3_email_id_fk_396224" => $email_id
+                                ]
+                            )
+                        ));
+                        $result = [
+                            "message" => $success.$msg
+                        ];
+                        return json_encode($result, true);
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
+
+    /**
+     * @param $param
+     * @return string
+     */
+    public function verifyEmail($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("everything", $permissions)) {
+                    $liam3_url = $param["liam3_url"];
+                    $email_id = $param["email_id"];
+                    $result = api(array(
+                        "cmd" => "makeTransition",
+                        "param" => array(
+                            "table" => "liam3_email",
+                            "row" => [
+                                "liam3_email_id" => $email_id,
+                                "only_verify_mail" => true,
+                                "state_id" => self::EMAIL_STATE_NOT_VERIFIED
+                            ]
+                        )
+                    ));
+                    $result = json_decode($result, true);
+                    if (count($result) > 2) {
+                        $result2 = api(array(
+                            "cmd" => "read",
+                            "param" => array(
+                                "table" => "liam3_email",
+                                "filter" => '{"=":["liam3_email_id", '.$email_id.']}'
+                            )
+                        ));
+                        $result2 = json_decode($result2, true);
+                        $result2 = $result2['records'];
+                        $email = $result2[0]['liam3_email_text'];
+                        $jwt_key = AUTH_KEY;
+                        $jwt_token = array(
+                            "iss" => "liam3",
+                            "aud" => $email_id,
+                            "iat" => time(),
+                            "exp" => time() + 10800
+                        );
+
+                        /**
+                         * IMPORTANT:
+                         * You must specify supported algorithms for your application. See
+                         * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                         * for a list of spec-compliant algorithms.
+                         */
+                        $jwt = JWT::encode($jwt_token, $jwt_key);
+
+                        $subject = "Verification";
+                        $link = $liam3_url . "/LIAM3_Client_verify.php?token=" . $jwt;
+                        $msg = "Please verify your mail - <a href=$link>Click here to verify your email</a>";
+                        $msg = str_replace('$link', $link, $msg);
+                        // Format and Send Mail
+                        $msg = wordwrap($msg, 70);
+                        /*if (mail($email, $subject, $msg)) {
+                            $success = 'A verification link has been sent to your email address.';
+                        } else {
+                            $error = "The email can't be send";
+                        }*/
+                        //mail($email, $subject, $msg);
+                        $success = 'A verification link has been sent to your email address.';
+                        $result = [
+                            "message" => $success.$msg
+                        ];
+                        return json_encode($result, true);
+                    } else {
+                        die(fmtError($result[0]['message']));
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
 }
