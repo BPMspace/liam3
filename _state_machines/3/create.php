@@ -37,7 +37,7 @@ if ($data['liam3_User_firstname'] && $data['liam3_User_lastname'] && $data['liam
     }
 }
 
-if (isset($data['new_email']) && $data['new_email'] && $allow) {
+/*if (isset($data['new_email']) && $data['new_email'] && $allow) {
     $result = api(array(
         "cmd" => "create",
         "param" => array(
@@ -56,16 +56,16 @@ if (isset($data['new_email']) && $data['new_email'] && $allow) {
         $msg = $result[0]['message'];
     }
     // TODO: Create a link between user - mail
-    /*api(["cmd" => "create", "param" => ["table" => "liam3_user_email",
-        "row" => ["liam3_User_id_fk_164887" => $data['new_email'], "only_verify_mail" => true ]
-    ]]);*/
+    //api(["cmd" => "create", "param" => ["table" => "liam3_user_email",
+    //    "row" => ["liam3_User_id_fk_164887" => $data['new_email'], "only_verify_mail" => true ]
+    //]]);
 
 } elseif (isset($data['liam3_User_email_id']) && $data['liam3_User_email_id'] && $allow) {
     $param['row']['created_email_id'] = $data['liam3_User_email_id'];
 } else {
     $allow = false;
     if (!$msg || $msg == 'OK') $msg = 'Please enter all the fields';
-}
+}*/
 
 $script_result = array(
     "allow_transition" => $allow,

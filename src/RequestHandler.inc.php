@@ -1045,7 +1045,8 @@ class RequestHandler
                             "param" => array(
                                 "table" => "liam3_email",
                                 "row" => array(
-                                    "liam3_email_text" => $email
+                                    "liam3_email_text" => $email,
+                                    "dont_send_email" => true
                                 )
                             )
                         )), true);
@@ -1060,7 +1061,7 @@ class RequestHandler
                         $jwt_key = AUTH_KEY;
                         $jwt_token = array(
                             "iss" => "liam3",
-                            "aud" => $email_id,
+                            "aud" => $email,
                             "iat" => time(),
                             "exp" => time() + 10800
                         );
@@ -1111,16 +1112,19 @@ class RequestHandler
             if (property_exists($this->token, "permissions")) {
                 $permissions = $this->token->permissions;
                 if (in_array("login", $permissions)) {
-                    $email_id = $param["email_id"];
+                    $email = $param["email"];
                     if (isset($param["check_email"])) {
                         $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
-                            "filter" => '{"and":[{"=":[ "liam3_email_id" ,' . $email_id . ']},{"!=":[ "state_id",' . self::EMAIL_STATE_NOT_VERIFIED . ']}]}'))), true);
+                            "filter" => '{"and":[{"=":[ "liam3_email_text" ,"' . $email . '"]},{"!=":[ "state_id",' . self::EMAIL_STATE_NOT_VERIFIED . ']}]}'))), true);
                         if ($check_email['count']) {
                             die(fmtError('This email is already verified or blocked.'));
                         } else {
                             return true;
                         }
                     } else {
+                        $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
+                            "filter" => '{"=":["liam3_email_text", "'.$email.'"]}'))), true);
+                        $email_id = $check_email['records'][0]['liam3_email_id'];
                         $password = $param["password"];
                         $firstname = $param["firstname"];
                         $lastname = $param["lastname"];
@@ -1379,7 +1383,8 @@ class RequestHandler
                             "table" => "liam3_email",
                             "row" => array(
                                 "liam3_email_text" => $email,
-                                "only_verify_mail" => true
+                                "only_verify_mail" => true,
+                                "dont_send_email" => true
                             )
                         )
                     ));
@@ -1389,7 +1394,7 @@ class RequestHandler
                         $jwt_key = AUTH_KEY;
                         $jwt_token = array(
                             "iss" => "liam3",
-                            "aud" => $email_id,
+                            "aud" => $email,
                             "iat" => time(),
                             "exp" => time() + 10800
                         );
@@ -1480,7 +1485,7 @@ class RequestHandler
                         $jwt_key = AUTH_KEY;
                         $jwt_token = array(
                             "iss" => "liam3",
-                            "aud" => $email_id,
+                            "aud" => $email,
                             "iat" => time(),
                             "exp" => time() + 10800
                         );
@@ -1512,6 +1517,37 @@ class RequestHandler
                         return json_encode($result, true);
                     } else {
                         die(fmtError($result[0]['message']));
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
+
+    public function getEmailId($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("login", $permissions)) {
+                    $email = $param["email"];
+                    $result = api(array(
+                        "cmd" => "read",
+                        "param" => array(
+                            "table" => "liam3_email",
+                            "filter" => '{"=":["liam3_email_text","'.$email.'"]}'
+                        )
+                    ));
+                    $result = json_decode($result, true);
+                    if (!$result['records']) {
+                        die(fmtError('Email not found.'));
+                    } else {
+                        $result = [
+                            "email_id" => $result['records'][0]['liam3_email_id']
+                        ];
+                        return json_encode($result, true);
                     }
                 }
             }
