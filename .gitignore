@@ -1,3 +1,4 @@
 *.secret.*
 *.SECRET.*
 ./_bpmspace_docker_*/
+.idea*
