@@ -248,9 +248,11 @@ class RequestHandler
 
     const EMAIL_STATE_NOT_VERIFIED = 1;
     const EMAIL_STATE_VERIFIED = 2;
+    const EMAIL_STATE_DELETED = 4;
     const USER_STATE_COMPLETE = 10;
     const USER_STATE_UPDATE = 11;
     const USER_EMAIL_STATE_USE = 13;
+    const USER_EMAIL_STATE_UNSELECTED = 14;
 
     public function __construct($tokendata = null)
     {
@@ -1524,7 +1526,11 @@ class RequestHandler
         die(fmtError('No access!'));
     }
 
-    public function getEmailId($param)
+    /**
+     * @param $param
+     * @return string
+     */
+    public function setEmailToVerified($param)
     {
         //-- Check Rights
         if (!is_null($this->token)) {
@@ -1544,10 +1550,225 @@ class RequestHandler
                     if (!$result['records']) {
                         die(fmtError('Email not found.'));
                     } else {
+                        $email_id = $result['records'][0]['liam3_email_id'];
+                        $result = api(array(
+                            "cmd" => "makeTransition",
+                            "param" => array(
+                                "table" => "liam3_email",
+                                "row" => array(
+                                    "liam3_email_id" => $email_id,
+                                    "state_id" => self::EMAIL_STATE_VERIFIED
+                                )
+                            )
+                        ));
+                        try {
+                            $result = json_decode($result, true);
+                        } catch (Exception $e) {
+                            die(fmtError($e->getMessage()));
+                        }
+                        if ($result && count($result) > 2) {
+                            $result = [
+                                "message" => 'Success.'
+                            ];
+                            return json_encode($result, true);
+                        } else {
+                            die(fmtError('This email is already verified or blocked.'));
+                        }
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
+
+    /**
+     * @param $param
+     * @return string
+     */
+    public function changePassword($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("everything", $permissions)) {
+                    $user_id = $param["user_id"];
+                    $password_old = $param["password_old"];
+                    $password_new = $param["password_new"];
+                    $password_new_confirm = $param["password_new_confirm"];
+                    $result = api(array(
+                        "cmd" => "makeTransition",
+                        "param" => array(
+                            "table" => "liam3_user",
+                            "row" => array(
+                                "liam3_User_id" => $user_id,
+                                "state_id" => self::USER_STATE_UPDATE
+                            )
+                        )
+                    ));
+                    $result = api(array(
+                        "cmd" => "makeTransition",
+                        "param" => array(
+                            "table" => "liam3_user",
+                            "row" => array(
+                                "liam3_User_id" => $user_id,
+                                "liam3_User_password_old" => $password_old,
+                                "liam3_User_password_new" => $password_new,
+                                "liam3_User_password_new_confirm" => $password_new_confirm,
+                                "state_id" => self::USER_STATE_COMPLETE
+                            )
+                        )
+                    ));
+                    $result = json_decode($result, true);
+                    if (count($result) > 2 && $result[1]['change_password']) {
                         $result = [
-                            "email_id" => $result['records'][0]['liam3_email_id']
+                            "message" => 'Password changed succesfully'
                         ];
                         return json_encode($result, true);
+                    } else {
+                        die(fmtError($result[1]['message']));
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
+
+    /**
+     * @param $param
+     * @return string
+     */
+    public function selectEmail($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("everything", $permissions)) {
+                    $user_email_id = $param["user_email_id"];
+                    $result = api(array(
+                        "cmd" => "makeTransition",
+                        "param" => array(
+                            "table" => "liam3_user_email",
+                            "row" => [
+                                "liam3_User_email_id" => $user_email_id,
+                                "state_id" => self::USER_EMAIL_STATE_USE
+                            ]
+                        )
+                    ));
+                    try {
+                        $result = json_decode($result, true);
+                    } catch (Exception $e) {
+                        die(fmtError($e->getMessage()));
+                    }
+                    if (count($result) > 2) {
+                        $result = [
+                            "message" => 'Email successfully selected.'
+                        ];
+                        return json_encode($result, true);
+                    } else {
+                        die(fmtError($result[0]['message']));
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
+
+    /**
+     * @param $param
+     * @return string
+     */
+    public function unselectEmail($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("everything", $permissions)) {
+                    $user_email_id = $param["user_email_id"];
+                    $result = api(array(
+                        "cmd" => "makeTransition",
+                        "param" => array(
+                            "table" => "liam3_user_email",
+                            "row" => [
+                                "liam3_User_email_id" => $user_email_id,
+                                "state_id" => self::USER_EMAIL_STATE_UNSELECTED
+                            ]
+                        )
+                    ));
+                    try {
+                        $result = json_decode($result, true);
+                    } catch (Exception $e) {
+                        die(fmtError($e->getMessage()));
+                    }
+                    if (count($result) > 2) {
+                        $result = [
+                            "message" => 'Email successfully unselected.'
+                        ];
+                        return json_encode($result, true);
+                    } else {
+                        die(fmtError($result[0]['message']));
+                    }
+                }
+            }
+        }
+        die(fmtError('No access!'));
+    }
+
+    /**
+     * @param $param
+     * @return string
+     */
+    public function deleteEmail($param)
+    {
+        //-- Check Rights
+        if (!is_null($this->token)) {
+            // User or NOT ?
+            if (property_exists($this->token, "permissions")) {
+                $permissions = $this->token->permissions;
+                if (in_array("everything", $permissions)) {
+                    $email_id = $param["email_id"];
+                    $result = api(array(
+                        "cmd" => "read",
+                        "param" => array(
+                            "table" => "liam3_email",
+                            "filter" => '{"=":["liam3_email_id", '.$email_id.']}'
+                        )
+                    ));
+                    try {
+                        $result = json_decode($result, true);
+                    } catch (Exception $e) {
+                        die(fmtError($e->getMessage()));
+                    }
+                    $result = $result['records'];
+                    if (!$result) die(fmtError('Wrong email'));
+                    $result = api(array(
+                        "cmd" => "makeTransition",
+                        "param" => array(
+                            "table" => "liam3_email",
+                            "row" => [
+                                "liam3_email_id" => $email_id,
+                                "liam3_email_text" => $result[0]['liam3_email_text'],
+                                "state_id" => self::EMAIL_STATE_DELETED
+                            ]
+                        )
+                    ));
+                    try {
+                        $result = json_decode($result, true);
+                    } catch (Exception $e) {
+                        die(fmtError($e->getMessage()));
+                    }
+                    if (count($result) > 2) {
+                        $result = [
+                            "message" => $result[1]['message']
+                        ];
+                        return json_encode($result, true);
+                    } else {
+                        die(fmtError($result[0]['message']));
                     }
                 }
             }
