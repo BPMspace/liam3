@@ -1,9 +1,6 @@
-CREATE DATABASE  IF NOT EXISTS `liam3` /*!40100 DEFAULT CHARACTER SET
-latin1 */;
-USE `liam3`;
 -- MySQL dump 10.13  Distrib 5.7.17, for Win64 (x86_64)
 --
--- Host: localhost    Database: liam3
+-- Host: localhost    Database: bpmspace_liam3_v1
 -- ------------------------------------------------------
 -- Server version    5.5.5-10.1.9-MariaDB
 
