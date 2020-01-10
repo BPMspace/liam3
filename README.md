@@ -23,8 +23,8 @@ II) CONFIG bpmspace_liam3_v1
      define('AUTH_KEY', 'EXAMPLEKEY'); // Shared AuthKey which has to be known by the Authentication-Service  
 ```
 III) LIAM-Client config  - ACHTUNG INC!!!!  
-	1) cp LIAM3_Client_api.EXAMPLE_secret.inc.php LIAM3_Client_api.secret.inc.php  
-	2) EXAMPLE CONFIG - create with iamdummy and  "m" "m" adn EXAMPLEKEY a token - authkey "EXAMPLEKEY" from II-2 - must be identical  
+..1) cp LIAM3_Client_api.EXAMPLE_secret.inc.php LIAM3_Client_api.secret.inc.php  
+..2) EXAMPLE CONFIG - create with iamdummy and  "m" "m" adn EXAMPLEKEY a token - authkey "EXAMPLEKEY" from II-2 - must be identical  
 
 ```<?php  
      	$url="https://blabla.at/liam3/api.php";  
