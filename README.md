@@ -8,8 +8,8 @@ I) Setup DB bpmspace_liam3_v1
 II) CONFIG bpmspace_liam3_v1  
   1) cp config.EXAMPLE_SECRET.inc.php config.SECRET.inc.php  
   2) EXAMPLE CONFIG  
-    ...
-	   <?php  
+
+```<?php  
      // APMS Generated Project (2019-11-12 16:11:26)  
      // Version: https://github.com/BPMspaceUG/APMS2/tree/446cc441e6c8d38ca3b4ccdd585fcc89f1cb6dfd  
      // ==================================================  
@@ -21,13 +21,13 @@ II) CONFIG bpmspace_liam3_v1
      //-- Authentication + API  
      define('API_URL_LIAM', 'https://blabla.at/liam3_client/LIAM3_Client_login.php'); // URL from Authentication-Service -> returns a JWT-Token  
      define('AUTH_KEY', 'EXAMPLEKEY'); // Shared AuthKey which has to be known by the Authentication-Service  
-	...
+```
 III) LIAM-Client config  - ACHTUNG INC!!!!  
 	1) cp LIAM3_Client_api.EXAMPLE_secret.inc.php LIAM3_Client_api.secret.inc.php  
 	2) EXAMPLE CONFIG - create with iamdummy and  "m" "m" adn EXAMPLEKEY a token - authkey "EXAMPLEKEY" from II-2 - must be identical  
-     ...
-	 <?php  
+
+```<?php  
      	$url="https://blabla.at/liam3/api.php";  
      	$token = "CCC";  
      	define('LIAM3_URL', 'https://blabla.at/liam3_client/');  
-     ...
+```
