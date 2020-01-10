@@ -4,6 +4,7 @@ I) Setup DB bpmspace_liam3_v1
   3) bpmspace_liam3_v1_statemachine.sql  
   4) bpmspace_liam3_v1_min.sql  
   5) bpmspace_liam3_v1_diff.sql  
+  
 II) CONFIG bpmspace_liam3_v1  
   1) cp config.EXAMPLE_SECRET.inc.php config.SECRET.inc.php  
   2) EXAMPLE CONFIG  
