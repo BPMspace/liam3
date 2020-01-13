@@ -45,10 +45,10 @@ if ($allow) {
 
             // Mail Content
             $subject = "Verification";
-            $link = API_URL_LIAM . "/LIAM3_Client_verify.php?token=" . $jwt;
+            $link = API_URL_LIAM . "/liam3_Client_verify.php?token=" . $jwt;
             $msg = "Please verify your mail - <a href=$link>Click here to verify your email</a>";
             /*$subject = "Please confirm your Mail Adress";
-            $link = API_URL_LIAM . "/LIAM3_Client_register.php?token=" . $jwt;
+            $link = API_URL_LIAM . "/liam3_Client_register.php?token=" . $jwt;
             $msg = "Hello, First line of text \n Second line of text <a href=$link>Click here to confirm your email</a>";*/
             $msg = str_replace('$link', $link, $msg);
             // Format and Send Mail
