@@ -19,7 +19,7 @@ II) CONFIG bpmspace_liam3_v1
      define('DB_HOST', 'localhost');  
      define('DB_NAME', 'bpmspace_liam3_v1');  
      //-- Authentication + API  
-     define('API_URL_LIAM', 'https://blabla.at/liam3_client/LIAM3_Client_login.php'); // URL from Authentication-Service -> returns a JWT-Token  
+     define('API_URL_LIAM', 'https://blabla.at:PORT/liam3_client/LIAM3_Client_login.php'); // URL from Authentication-Service -> returns a JWT-Token  
      define('AUTH_KEY', 'EXAMPLEKEY'); // Shared AuthKey which has to be known by the Authentication-Service  
 ```
 III) LIAM-Client config  - ACHTUNG INC!!!!  
@@ -27,7 +27,7 @@ III) LIAM-Client config  - ACHTUNG INC!!!!
 ..2) EXAMPLE CONFIG - create with iamdummy and  "m" "m" adn EXAMPLEKEY a token - authkey "EXAMPLEKEY" from II-2 - must be identical  
 
 ```<?php  
-     	$url="https://blabla.at/liam3/api.php";  
+     	$url="https://blabla.at:PORT/liam3/api.php";  
      	$token = "CCC";  
-     	define('LIAM3_URL', 'https://blabla.at/liam3_client/');  
+     	define('LIAM3_URL', 'https://blabla.at:PORT/liam3_client/');  
 ```
