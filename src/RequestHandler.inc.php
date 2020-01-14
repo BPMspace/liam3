@@ -1084,13 +1084,12 @@ class RequestHandler
                         $msg = str_replace('$link', $link, $msg);
                         // Format and Send Mail
                         $msg = wordwrap($msg, 70);
-                        /*if (!mail($email, $subject, $msg)) {
+                        if (!mail($email, $subject, $msg)) {
                             die(fmtError($result[0]['The email can\'t be send.']));
-                        }*/
-                        //mail($email, $subject, $msg);
+                        }
                         $result = [
                             "email_id" => $email_id,
-                            "message" => 'A verification link has been sent to your email address.' . $msg
+                            "message" => 'A verification link has been sent to your email address.'
                         ];
                         return json_encode($result, true);
                     } else {
@@ -1292,16 +1291,13 @@ class RequestHandler
                         $msg = str_replace('$link', $link, $msg);
                         // Format and Send Mail
                         $msg = wordwrap($msg, 70);
-                        //mail($email_input, $subject, $msg);
+                        if (!mail($email_input, $subject, $msg)) {
+                            die(fmtError($result[0]['The email can\'t be send.']));
+                        }
                         $result = [
-                            "message" => 'Password reset link is sent to this e-mail address.' . $msg
+                            "message" => 'Password reset link is sent to this e-mail address.'
                         ];
                         return json_encode($result, true);
-                        /*if (mail($email_input, $subject, $msg)) {
-                            $success = 'Password reset link sent to email.';
-                        } else {
-                            $error = "The email can't be send";
-                        }*/
                     }
                 }
             }
@@ -1414,12 +1410,9 @@ class RequestHandler
                         $msg = str_replace('$link', $link, $msg);
                         // Format and Send Mail
                         $msg = wordwrap($msg, 70);
-                        /*if (mail($email, $subject, $msg)) {
-                            $success = 'A verification link has been sent to your email address.';
-                        } else {
-                            $error = "The email can't be send";
-                        }*/
-                        //mail($email, $subject, $msg);
+                        if (!mail($email, $subject, $msg)) {
+                            die(fmtError($result[0]['The email can\'t be send.']));
+                        }
                         $success = 'A verification link has been sent to your email address.';
                     } else {
                         die(fmtError($result[0]['message']));
@@ -1437,7 +1430,7 @@ class RequestHandler
                             )
                         ));
                         $result = [
-                            "message" => $success.$msg
+                            "message" => $success
                         ];
                         return json_encode($result, true);
                     }
@@ -1506,15 +1499,12 @@ class RequestHandler
                         $msg = str_replace('$link', $link, $msg);
                         // Format and Send Mail
                         $msg = wordwrap($msg, 70);
-                        /*if (mail($email, $subject, $msg)) {
-                            $success = 'A verification link has been sent to your email address.';
-                        } else {
-                            $error = "The email can't be send";
-                        }*/
-                        //mail($email, $subject, $msg);
+                        if (!mail($email, $subject, $msg)) {
+                            die(fmtError($result[0]['The email can\'t be send.']));
+                        }
                         $success = 'A verification link has been sent to your email address.';
                         $result = [
-                            "message" => $success.$msg
+                            "message" => $success
                         ];
                         return json_encode($result, true);
                     } else {

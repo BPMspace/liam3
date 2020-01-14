@@ -53,12 +53,11 @@ if ($allow) {
             $msg = str_replace('$link', $link, $msg);
             // Format and Send Mail
             $msg = wordwrap($msg, 70);
-            /*if (!mail($email, $subject, $msg)) {
-                $msg = "The email can\'t be send.";
-                $allow = false;
-            }*/
-            //mail($email, $subject, $msg);
-            $msg = 'A verification link has been sent to your email address.' . $msg;
+            if (!mail($email, $subject, $msg)) {
+                $msg = 'The email can\'t be send.';
+            } else {
+                $msg = 'A verification link has been sent to your email address.';
+            }
         }
         $allow = true;
     } else {
