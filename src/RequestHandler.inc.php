@@ -249,6 +249,7 @@ class RequestHandler
     const EMAIL_STATE_NOT_VERIFIED = 1;
     const EMAIL_STATE_VERIFIED = 2;
     const EMAIL_STATE_DELETED = 4;
+    const USER_STATE_INCOMPLETE = 9;
     const USER_STATE_COMPLETE = 10;
     const USER_STATE_UPDATE = 11;
     const USER_EMAIL_STATE_USE = 13;
@@ -1557,6 +1558,27 @@ class RequestHandler
                             die(fmtError($e->getMessage()));
                         }
                         if ($result && count($result) > 2) {
+                            $result = api(array(
+                                "cmd" => "read",
+                                "param" => array(
+                                    "table" => "liam3_user_email",
+                                    "filter" => '{"=":["liam3_email_text","'.$email.'"]}'
+                                )
+                            ));
+                            $result = json_decode($result, true);
+                            // Set user state to complete if email is verified and firstname and lastname set
+                            if ($result['records'][0]['liam3_User_id_fk_164887']['state_id'] == self::USER_STATE_INCOMPLETE && $result['records'][0]['liam3_User_id_fk_164887']['liam3_User_firstname'] && $result['records'][0]['liam3_User_id_fk_164887']['liam3_User_lastname']) {
+                                api(array(
+                                    "cmd" => "makeTransition",
+                                    "param" => array(
+                                        "table" => "liam3_user",
+                                        "row" => array(
+                                            "liam3_User_id" => $result['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'],
+                                            "state_id" => self::USER_STATE_COMPLETE
+                                        )
+                                    )
+                                ));
+                            }
                             $result = [
                                 "message" => 'Success.'
                             ];
