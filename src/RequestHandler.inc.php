@@ -1496,7 +1496,7 @@ class RequestHandler
 
                         $subject = "Verification";
                         $link = $liam3_url . "/liam3_Client_verify.php?token=" . $jwt;
-                        $msg = "Please verify your mail - <a href='$link'>Click here to verify your email</a>";
+                        $msg = "Please verify your mail - <a href=$link>Click here to verify your email</a>";
                         $msg = str_replace('$link', $link, $msg);
                         // Format and Send Mail
                         $msg = wordwrap($msg, 70);

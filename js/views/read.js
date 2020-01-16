@@ -54,7 +54,7 @@ export default (props) => {
   return `<div>
     <h2 title="${t.getTableType()}">${t.getTableIcon() + ' ' + t.getTableAlias()}</h2>
     <hr>
-    <form class="form-inline mb-1" onSubmit="return false;">
+    <form class="form-inline mb-1" onSubmit="return false">
       <input type="text" id="searchBox" class="form-control d-inline-block w-50 w-lg-25 mr-1" placeholder="Search..."/>
       <a class="btn btn-success mr-1" href="#/${props.table}/create">${textCreate}</a>
       ${t.SM ? '<a class="btn btn-info" href="#/'+props.table+'/workflow"><span class="d-none d-lg-inline">Workflow</span><span class="d-lg-none">WF</span></a>' : ''}
