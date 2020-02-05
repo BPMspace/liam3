@@ -1,3 +1,12 @@
+ALTER TABLE `liam3`.`role_user` 
+ADD INDEX `role_user_user_idx` (`user_id` ASC);
+ALTER TABLE `liam3`.`role_user` 
+ADD CONSTRAINT `role_user_user`
+  FOREIGN KEY (`user_id`)
+  REFERENCES `liam3`.`liam3_user` (`liam3_User_id`)
+  ON DELETE NO ACTION
+  ON UPDATE NO ACTION;
+
 -- ---
 -- Table Properties
 -- ---
