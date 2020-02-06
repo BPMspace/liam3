@@ -76,7 +76,7 @@ CREATE TABLE `liam3_email` (
   PRIMARY KEY (`liam3_email_id`),
   KEY `state_id_60534bd2` (`state_id`),
   CONSTRAINT `state_id_60534bd2` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -94,7 +94,7 @@ CREATE TABLE `liam3_loginattempts` (
   PRIMARY KEY (`liam3_LoginAttempts_id`),
   KEY `state_id_85c73855` (`state_id`),
   CONSTRAINT `state_id_85c73855` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -114,7 +114,7 @@ CREATE TABLE `liam3_user` (
   PRIMARY KEY (`liam3_User_id`),
   KEY `state_id_38047781` (`state_id`),
   CONSTRAINT `state_id_38047781` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -136,7 +136,7 @@ CREATE TABLE `liam3_user_email` (
   CONSTRAINT `liam3_user_email_ibfk_1` FOREIGN KEY (`liam3_User_id_fk_164887`) REFERENCES `liam3_user` (`liam3_User_id`),
   CONSTRAINT `liam3_user_email_ibfk_2` FOREIGN KEY (`liam3_email_id_fk_396224`) REFERENCES `liam3_email` (`liam3_email_id`),
   CONSTRAINT `state_id_9c23c55f` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -173,7 +173,7 @@ CREATE TABLE `role` (
   `role_name` varchar(45) DEFAULT NULL,
   `ConfigDiff` longtext,
   PRIMARY KEY (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2914 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,7 +192,7 @@ CREATE TABLE `role_user` (
   KEY `role_user_user_idx` (`user_id`),
   CONSTRAINT `role_id_fk` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `role_user_user` FOREIGN KEY (`user_id`) REFERENCES `liam3_user` (`liam3_User_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -316,4 +316,4 @@ CREATE TABLE `state_rules` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-02-05 16:58:06
+-- Dump completed on 2020-02-06 10:55:17

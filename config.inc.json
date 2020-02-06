@@ -17,7 +17,7 @@
                 "show_in_grid": false,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "liam3_email_text": {
@@ -37,7 +37,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 3,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "state"
             }
         },
@@ -61,7 +61,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "liam3_LoginAttempts_time": {
@@ -91,7 +91,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 4,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "state"
             }
         },
@@ -115,7 +115,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "liam3_User_firstname": {
@@ -155,7 +155,7 @@
                 "show_in_grid": false,
                 "show_in_form": true,
                 "col_order": 5,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "textarea"
             },
             "state_id": {
@@ -165,7 +165,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 6,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "state"
             },
             "virtualCol": {
@@ -202,7 +202,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "liam3_User_id_fk_164887": {
@@ -242,7 +242,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 4,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "state"
             }
         },
@@ -266,7 +266,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "liam3_User_id_fk_955788": {
@@ -306,7 +306,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 4,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "state"
             }
         },
@@ -330,7 +330,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "role_name": {
@@ -374,7 +374,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "role_id": {
@@ -408,8 +408,7 @@
                 }
             }
         },
-        "table_icon": "\u003Ci class=\u0022fa fa-square\u0022\u003E\u003C\/i\u003E",
-        "showKids": false
+        "table_icon": "\u003Ci class=\u0022fa fa-square\u0022\u003E\u003C\/i\u003E"
     },
     "state_machines": {
         "table_alias": "Machines",
@@ -429,7 +428,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "tablename": {
@@ -473,7 +472,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "name": {
@@ -552,7 +551,7 @@
                 "show_in_grid": true,
                 "show_in_form": true,
                 "col_order": 1,
-                "mode_form": "hi",
+                "mode_form": "ro",
                 "field_type": "number"
             },
             "state_id_FROM": {
