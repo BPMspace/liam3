@@ -12,7 +12,7 @@
   header('Content-Type: application/json; charset=utf-8');
   // Includes
   require_once(__DIR__.'/src/AuthHandler.inc.php');
-  include_once(__DIR__."/src/RequestHandler.inc.php");
+  require_once(__DIR__."/src/RequestHandler.inc.php");
 
   //========================================= Authentification
   // Check if authenticated via Token
@@ -25,19 +25,23 @@
     catch (Exception $e) {
       // Invalid Token!
       http_response_code(401);
-      die(json_encode(['error' => ['msg' => "Please use a Token for authentication."]]));
+      die(json_encode(['error' => [
+        'msg' => 'Please use a Token for authentication.',
+        'url' => getLoginURL()
+      ]]));
     }
     // Token is valid but expired?
-    // iss timestamp in Token
-    define('TOKEN_EXP_TIME', 60 * 10000000);
     if ((time() - $tokendata->iat) >= TOKEN_EXP_TIME) {
       http_response_code(401);
-      die(json_encode(['error' => ['msg' => "This Token has expired. Please renew your Token."]]));
+      die(json_encode(['error' => [
+        'msg' => 'This Token has expired. Please renew your Token.',
+        'url' => getLoginURL()
+      ]]));
     }
   }
   //========================================= Parameter & Handling
   try {
-    $bodyData = json_decode(file_get_contents('php://input'), true);
+    $bodyData = json_decode(file_get_contents('php://input'));
     //--> Check Methods (GET, POST, PATCH)
     if ($ReqMethod === 'GET') {
       // [GET]
@@ -50,13 +54,13 @@
     }
     else if ($ReqMethod === 'POST') {
       // [POST]
-      $command = $bodyData["cmd"]; // TODO: --> create only
-      $param = isset($bodyData["param"]) ? $bodyData["param"] : null;
+      $command = $bodyData->cmd; // create || import || makeTransition      
+      $param = property_exists($bodyData, "param") ? $bodyData->param : null;
     }
     else if ($ReqMethod === 'PATCH') {
       // [PATCH]
-      $command = 'update'; // TODO: transit
-      $param = isset($bodyData["param"]) ? $bodyData["param"] : null;
+      $command = 'update';
+      $param = property_exists($bodyData, "param") ? $bodyData->param : null;
     }
     else {
       http_response_code(405);
@@ -70,5 +74,5 @@
   //========================= Handle the Requests
 
   // Handle Command and Rights Management
-  $result = api(["cmd" => $command, "param" => $param], $tokendata);
-  /*[OUTPUT]========>*/ echo $result;
+  $result = api(["cmd"=>$command, "param"=>$param], $tokendata);
+  echo $result;

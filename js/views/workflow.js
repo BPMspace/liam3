@@ -1,29 +1,27 @@
 export default props => {
-    
+  // Variables
   const t = new Table(props.table);
-
+  // Methods
   if (t.SM) {
-    setTimeout(function(){
-      t.SM.renderHTML(document.getElementById('statemachine'));
-    }, 1);
-    // Set Title
-    window.document.title = "Workflow of " + t.getTableAlias();
+    //--- Set Title
+    window.document.title = gText[setLang].titleWorkflow.replace('{alias}', t.getTableAlias());
+    //--- Load Workflow into DOM
+    setTimeout(() => { t.SM.renderHTML(document.getElementById('statemachine')); }, 10);
+    //------ HTML Output
     return `<div>
-      <h2>${t.getTableIcon() + ' ' + t.getTableAlias()}:Workflow</h2>
-      <hr>
+      <h2 class="text-info">${t.getTableIcon() + ' ' + t.getTableAlias()} Workflow</h2>
       <div id="statemachine"></div>
       <br>
-      <hr>
       <div class="text-center pb-3">
-        <span><a class="btn btn-light" href="#/${t.getTablename()}">Back</a></span>
+        <span><a class="btn btn-light" href="#/${t.getTablename()}">${gText[setLang].Cancel}</a></span>
       </div>
     </div>`;
-  } 
+  }
   // Error
   return `<div>
     <p style="color: red;">Error: This Table does not have a Workflow!</p>
   </div>
   <div class="text-center pb-3">
-    <span><a class="btn btn-light" href="#/${t.getTablename()}">Back</a></span>
+    <span><a class="btn btn-light" href="#/${t.getTablename()}">${gText[setLang].Cancel}</a></span>
   </div>`;
 }

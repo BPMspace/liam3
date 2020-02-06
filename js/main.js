@@ -1,20 +1,8 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var SortOrder;
-(function (SortOrder) {
-    SortOrder["ASC"] = "ASC";
-    SortOrder["DESC"] = "DESC";
-})(SortOrder || (SortOrder = {}));
 var SelectType;
 (function (SelectType) {
     SelectType[SelectType["NoSelect"] = 0] = "NoSelect";
     SelectType[SelectType["Single"] = 1] = "Single";
+    SelectType[SelectType["Multi"] = 2] = "Multi";
 })(SelectType || (SelectType = {}));
 var TableType;
 (function (TableType) {
@@ -24,23 +12,41 @@ var TableType;
     TableType["tn_1"] = "n_1";
     TableType["tn_m"] = "n_m";
 })(TableType || (TableType = {}));
-class LiteEvent {
-    constructor() {
-        this.handlers = [];
+const gText = {
+    en: {
+        Create: 'Create',
+        Cancel: 'Cancel',
+        Search: 'Search...',
+        Loading: 'Loading...',
+        Save: 'Save',
+        Relate: 'Relate',
+        Workflow: 'Workflow',
+        titleCreate: 'Create {alias}',
+        titleRelate: 'Relate {alias}',
+        titleModify: 'Modify {alias} {id}',
+        titleWorkflow: 'Workflow of {alias}',
+        noEntries: 'No Entries',
+        entriesStats: 'Entries {lim_from}-{lim_to} of {count}',
+        noFinds: 'Sorry, nothing found.'
+    },
+    de: {
+        Create: 'Erstellen',
+        Cancel: 'Abbrechen',
+        Search: 'Suchen...',
+        Loading: 'Laden...',
+        Save: 'Speichern',
+        Relate: 'Verbinden',
+        Workflow: 'Workflow',
+        titleCreate: 'Neu {alias}',
+        titleRelate: 'Verbinden {alias}',
+        titleModify: 'Ändern {alias} {id}',
+        titleWorkflow: 'Workflow von {alias}',
+        noEntries: 'Keine Einträge',
+        entriesStats: 'Einträge {lim_from}-{lim_to} von {count}',
+        noFinds: 'Keine Ergebnisse gefunden.'
     }
-    on(handler) {
-        this.handlers.push(handler);
-    }
-    off(handler) {
-        this.handlers = this.handlers.filter(h => h !== handler);
-    }
-    trigger(data) {
-        this.handlers.slice(0).forEach(h => h(data));
-    }
-    expose() {
-        return this;
-    }
-}
+};
+const setLang = 'en';
 class DB {
     static request(command, params, callback) {
         let me = this;
@@ -62,7 +68,7 @@ class DB {
             HTTPMethod = 'GET';
             const getParamStr = Object.keys(params).map(key => {
                 const val = params[key];
-                return key + '=' + (isObject(val) ? JSON.stringify(val) : val);
+                return key + '=' + (DB.isObject(val) ? JSON.stringify(val) : val);
             }).join('&');
             url += '?' + getParamStr;
         }
@@ -72,20 +78,25 @@ class DB {
             HTTPBody = JSON.stringify(data);
         }
         else {
-            data['param']['path'] = location.hash;
+            if (command == 'makeTransition' || command == 'call')
+                data['param']['path'] = location.hash;
             HTTPBody = JSON.stringify(data);
         }
         fetch(url, {
             method: HTTPMethod,
-            headers: {
-                'Authorization': 'Bearer '+token
-            }, 
             body: HTTPBody,
             credentials: 'same-origin'
         }).then(response => {
             return response.json();
         }).then(res => {
-            callback(res);
+            if (res.error) {
+                console.error(res.error.msg);
+                if (res.error.url) {
+                    document.location.assign('?logout');
+                }
+            }
+            else
+                callback(res);
         });
     }
     static loadConfig(callback) {
@@ -94,82 +105,53 @@ class DB {
             callback(config);
         });
     }
-}
-DB.API_URL = 'api.php';
-DB.getID = function () {
-    function chr4() { return Math.random().toString(16).slice(-4); }
-    return 'i' + chr4() + chr4() + chr4() + chr4() + chr4() + chr4() + chr4() + chr4();
-};
-class Modal {
-    constructor(heading, content, footer = '', isBig = false) {
-        this.options = {
-            btnTextClose: 'Close'
-        };
-        this.DOM_ID = DB.getID();
-        this.heading = heading;
-        this.content = content;
-        this.footer = footer;
-        this.isBig = isBig;
-        var self = this;
-        let sizeType = '';
-        if (this.isBig)
-            sizeType = ' modal-xl';
-        let html = `<div id="${this.DOM_ID}" class="modal fade" tabindex="-1" role="dialog">
-      <div class="modal-dialog${sizeType}">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title w-75">${this.heading}</h5>
-            <button type="button" class="close closeButton" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            ${this.content}
-          </div>
-          <div class="modal-footer">
-            <span class="customfooter d-flex">${this.footer}</span>
-            <button type="button" class="btn btn-light closeButton" data-dismiss="modal">
-              ${this.options.btnTextClose}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-        let body = document.getElementsByTagName('body')[0];
-        let modal = document.createElement('div');
-        modal.innerHTML = html;
-        body.appendChild(modal);
-        let closeBtns = document.getElementById(this.DOM_ID).getElementsByClassName('closeButton');
-        for (let closeBtn of closeBtns) {
-            closeBtn.addEventListener("click", function () {
-                self.close();
-            });
+    static escapeHtml(string) {
+        const entityMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' };
+        return String(string).replace(/[&<>"'`=\/]/g, s => entityMap[s]);
+    }
+    static isObject(item) {
+        return (item && typeof item === 'object' && !Array.isArray(item));
+    }
+    static mergeDeep(target, ...sources) {
+        if (!sources.length)
+            return target;
+        const source = sources.shift();
+        if (this.isObject(target) && this.isObject(source)) {
+            for (const key in source) {
+                if (this.isObject(source[key])) {
+                    if (!target[key]) {
+                        Object.assign(target, { [key]: {} });
+                    }
+                    else {
+                        target[key] = Object.assign({}, target[key]);
+                    }
+                    this.mergeDeep(target[key], source[key]);
+                }
+                else {
+                    Object.assign(target, { [key]: source[key] });
+                }
+            }
+        }
+        return this.mergeDeep(target, ...sources);
+    }
+    static recflattenObj(x) {
+        if (this.isObject(x)) {
+            return Object.keys(x).map(e => { return this.isObject(x[e]) ? this.recflattenObj(x[e]) : x[e]; });
         }
     }
-    setHeader(html) {
-        document.getElementById(this.DOM_ID).getElementsByClassName('modal-title')[0].innerHTML = html;
-    }
-    setFooter(html) {
-        document.getElementById(this.DOM_ID).getElementsByClassName('customfooter')[0].innerHTML = html;
-    }
-    setContent(html) {
-        document.getElementById(this.DOM_ID).getElementsByClassName('modal-body')[0].innerHTML = html;
-    }
-    show() {
-        let modal = document.getElementById(this.DOM_ID);
-        modal.classList.add('show');
-        modal.style.display = 'block';
-    }
-    close() {
-        document.getElementById(this.DOM_ID).parentElement.remove();
-    }
-    getDOMID() {
-        return this.DOM_ID;
+    static debounce(delay, fn) {
+        let timerId;
+        return function (...args) {
+            if (timerId)
+                clearTimeout(timerId);
+            timerId = setTimeout(() => { fn(...args); timerId = null; }, delay);
+        };
     }
 }
+DB.API_URL = 'api.php';
+DB.getID = () => { const c4 = () => { return Math.random().toString(16).slice(-4); }; return 'i' + c4() + c4() + c4() + c4() + c4() + c4() + c4() + c4(); };
 class StateMachine {
-    constructor(table, states, links) {
-        this.myTable = table;
+    constructor(states, links) {
         this.myStates = states;
         this.myLinks = links;
     }
@@ -224,12 +206,49 @@ class StateMachine {
             node['color'] = css.background;
             return node;
         });
-        const _edges = this.myLinks.map(link => {
-            const edge = {};
-            edge['from'] = (idOffset + link.from);
-            edge['to'] = (idOffset + link.to);
-            return edge;
+        function getDuplicates(input) {
+            if (input.length === 1)
+                return [null, input[0]];
+            const unique = [];
+            const duplicates = input.filter(o => {
+                if (unique.find(i => i.from === o.from && i.to === o.to))
+                    return true;
+                unique.push(o);
+                return false;
+            });
+            return [duplicates, unique];
+        }
+        let iter = 0;
+        let running = true;
+        let tmp = null;
+        let du = this.myLinks;
+        let uni = [];
+        while (running) {
+            iter++;
+            tmp = getDuplicates(du);
+            du = tmp[0];
+            uni = uni.concat(tmp[1]);
+            if (du && du.length > 0) {
+                du = du.map(x => {
+                    if (x.from === x.to)
+                        x['selfReferenceSize'] = 30 + 20 * iter;
+                    else
+                        x['smooth'] = { type: 'curvedCW', roundness: 0.2 * iter };
+                    return x;
+                });
+            }
+            else
+                running = false;
+        }
+        let links = uni;
+        links = links.map(o => {
+            o['label'] = o.transID.toString();
+            delete o.transID;
+            o.from += idOffset;
+            o.to += idOffset;
+            return o;
         });
+        const _edges = links;
         _nodes.forEach(node => {
             if (node.isEntryPoint) {
                 _nodes.push({ id: counter, color: 'LimeGreen', shape: 'dot', size: 10, title: 'Entrypoint' });
@@ -244,21 +263,28 @@ class StateMachine {
             }
         });
         const options = {
-            height: '400px',
-            edges: { color: { color: '#888888' }, shadow: true, length: 100, arrows: 'to', arrowStrikethrough: true, smooth: {} },
-            nodes: {
-                shape: 'box', margin: 20, heightConstraint: { minimum: 40 }, widthConstraint: { minimum: 80, maximum: 200 },
-                borderWidth: 0, size: 24, font: { color: '#888888', size: 16 }, shapeProperties: { useBorderWithImage: false }, scaling: { min: 10, max: 30 },
-                fixed: { x: false, y: false }
+            height: '500px',
+            edges: {
+                color: { color: '#aaaaaa' },
+                arrows: { 'to': { enabled: true } },
+                selfReference: { size: 30, angle: Math.PI / 4 },
+                smooth: { type: 'continuous', roundness: 0.5 }
             },
-            layout: { improvedLayout: true,
+            nodes: {
+                shape: 'box',
+                heightConstraint: { minimum: 40 },
+                widthConstraint: { minimum: 80, maximum: 200 },
+                font: { color: '#888888', size: 14 }
+            },
+            layout: {
                 hierarchical: {
-                    enabled: true, direction: 'LR', nodeSpacing: 200, levelSeparation: 225, blockShifting: false, edgeMinimization: false,
-                    parentCentralization: false, sortMethod: 'directed'
+                    direction: 'LR',
+                    nodeSpacing: 200,
+                    levelSeparation: 300,
+                    treeSpacing: 400
                 }
             },
-            physics: { enabled: false },
-            interaction: {}
+            physics: false
         };
         let network = new vis.Network(querySelector, { nodes: _nodes, edges: _edges }, options);
         network.fit({ scale: 1, offset: { x: 0, y: 0 } });
@@ -284,168 +310,300 @@ class StateMachine {
         return name;
     }
 }
-class RawTable {
-    constructor(tablename) {
+class StateButton {
+    constructor(rowData, statecol = 'state_id') {
+        this._table = null;
+        this._stateID = null;
+        this._editable = false;
+        this._name = '';
+        this.rowData = null;
+        this.modForm = null;
+        this.onSuccess = () => { };
+        this.setTable = (table) => {
+            this._table = table;
+            this._name = this._table.SM.getStateNameById(this._stateID);
+            const RowID = this.rowData[table.getPrimaryColname()];
+            this.rowData = {};
+            this.rowData[table.getPrimaryColname()] = RowID;
+        };
+        this.setForm = (modifyForm) => {
+            this.modForm = modifyForm;
+        };
+        this.setName = (name) => {
+            this._name = name;
+        };
+        this.setReadOnly = (readonly) => {
+            this._editable = !readonly;
+        };
+        this.setOnSuccess = (callback) => {
+            this.onSuccess = callback;
+        };
+        this.getButton = () => {
+            const btn = document.createElement('button');
+            btn.classList.add('btn', 'btnState', 'btnGrid', 'btn-sm', 'label-state', 'btnDisabled', 'state' + this._stateID);
+            btn.setAttribute('onclick', 'return false;');
+            btn.setAttribute('title', 'State-ID: ' + this._stateID);
+            btn.innerText = this._name;
+            return btn;
+        };
+        this.handleTrans = (targetStateID) => {
+            const self = this;
+            const data = { table: self._table.getTablename(), row: self.rowData };
+            if (self.modForm) {
+                const newVals = self.modForm.getValues(true);
+                const newRowDataFromForm = newVals[self._table.getTablename()][0];
+                data.row = DB.mergeDeep({}, data.row, newRowDataFromForm);
+            }
+            data.row[self.stateCol] = targetStateID;
+            DB.request('makeTransition', data, resp => {
+                if (resp.length === 3)
+                    self.onSuccess();
+                let counter = 0;
+                const messages = [];
+                resp.forEach(msg => {
+                    if (msg.show_message)
+                        messages.push({ type: counter, text: msg.message });
+                    counter++;
+                });
+                messages.reverse();
+                const btnFrom = new StateButton({ state_id: self._stateID });
+                const btnTo = new StateButton({ state_id: targetStateID });
+                btnFrom.setTable(self._table);
+                btnFrom.setReadOnly(true);
+                btnTo.setTable(self._table);
+                btnTo.setReadOnly(true);
+                for (const msg of messages) {
+                    let title = '';
+                    if (msg.type == 0)
+                        title += `${btnFrom.getElement().outerHTML} &rarr;`;
+                    if (msg.type == 1)
+                        title += `${btnFrom.getElement().outerHTML} &rarr; ${btnTo.getElement().outerHTML}`;
+                    if (msg.type == 2)
+                        title += `&rarr; ${btnTo.getElement().outerHTML}`;
+                    document.getElementById('myModalTitle').innerHTML = title;
+                    document.getElementById('myModalContent').innerHTML = msg.text;
+                    $('#myModal').modal({});
+                }
+            });
+        };
+        this.getElement = () => {
+            const self = this;
+            if (!this._editable) {
+                return this.getButton();
+            }
+            else {
+                const btn = this.getButton();
+                const list = document.createElement('div');
+                const wrapper = document.createElement('div');
+                btn.classList.remove('btnDisabled');
+                btn.classList.add('dropdown-toggle', 'btnEnabled');
+                btn.addEventListener('click', e => {
+                    e.preventDefault();
+                    if (list.classList.contains('show'))
+                        list.classList.remove('show');
+                    else
+                        list.classList.add('show');
+                });
+                wrapper.classList.add('dropdown');
+                list.classList.add('dropdown-menu', 'p-0');
+                const nextstates = this._table.SM.getNextStates(this._stateID);
+                if (nextstates.length > 0) {
+                    nextstates.map(state => {
+                        const nextbtn = document.createElement('a');
+                        nextbtn.classList.add('dropdown-item', 'btnState', 'btnEnabled', 'state' + state.id);
+                        nextbtn.setAttribute('href', 'javascript:void(0)');
+                        nextbtn.innerText = state.name;
+                        nextbtn.addEventListener("click", e => {
+                            e.preventDefault();
+                            self.handleTrans(state.id);
+                            list.classList.remove('show');
+                        });
+                        list.appendChild(nextbtn);
+                    });
+                }
+                else
+                    return self.getButton();
+                wrapper.appendChild(btn);
+                wrapper.appendChild(list);
+                return wrapper;
+            }
+        };
+        this.getTransButtons = () => {
+            const self = this;
+            const wrapper = document.createElement('span');
+            const nextstates = this._table.SM.getNextStates(this._stateID);
+            if (nextstates.length > 0) {
+                nextstates.map(state => {
+                    const nextbtn = document.createElement('a');
+                    nextbtn.classList.add('btn', 'mr-1');
+                    nextbtn.setAttribute('href', 'javascript:void(0)');
+                    if (state.id === self._stateID) {
+                        nextbtn.innerText = gText[setLang].Save;
+                        nextbtn.classList.add('btnState', 'btnEnabled', 'btn-primary');
+                    }
+                    else {
+                        nextbtn.innerText = state.name;
+                        nextbtn.classList.add('btnState', 'btnEnabled', 'state' + state.id);
+                    }
+                    nextbtn.addEventListener("click", e => {
+                        e.preventDefault();
+                        self.handleTrans(state.id);
+                    });
+                    wrapper.appendChild(nextbtn);
+                });
+            }
+            return wrapper;
+        };
+        this._stateID = rowData[statecol];
+        this._editable = true;
+        this.rowData = rowData;
+        this.stateCol = statecol;
+    }
+}
+class Table {
+    constructor(tablename, SelType = SelectType.NoSelect) {
         this.Sort = '';
         this.Search = '';
         this.PriColname = '';
+        this.Config = null;
         this.PageLimit = 10;
         this.PageIndex = 0;
-        const t = this;
-        t.actRowCount = 0;
-        t.tablename = tablename;
-        t.Config = JSON.parse(JSON.stringify(DB.Config.tables[tablename]));
-        t.Columns = t.Config.columns;
-        for (const colname of Object.keys(t.Columns)) {
-            if (t.Columns[colname].is_primary) {
-                t.PriColname = colname;
-                return;
+        this.Path = '';
+        this.DOMContainer = null;
+        this.SM = null;
+        this.selType = SelectType.NoSelect;
+        this.TableType = TableType.obj;
+        this.selectedRows = [];
+        this.options = {
+            smallestTimeUnitMins: true,
+            showControlColumn: true,
+            showWorkflowButton: false,
+            showCreateButton: true,
+            showSearch: true
+        };
+        this.isExpanded = false;
+        this.callbackSelectionChanged = resp => { };
+        this.callbackCreatedElement = resp => { };
+        this.callbackSelectElement = row => { };
+        this.callbackUnselectElement = row => { };
+        const self = this;
+        self.actRowCount = 0;
+        self.tablename = tablename;
+        self.Path = tablename + '/0';
+        self.Config = JSON.parse(JSON.stringify(DB.Config.tables[tablename]));
+        self.Columns = self.Config.columns;
+        for (const colname of Object.keys(self.Columns)) {
+            if (self.Columns[colname].is_primary) {
+                self.PriColname = colname;
+                break;
             }
         }
-        t.resetFilter();
+        self.resetFilter();
+        self.selType = SelType;
+        self.TableType = self.Config.table_type;
+        self.setSort(self.Config.stdsorting);
+        self.ReadOnly = (self.Config.mode == 'ro');
+        if (self.Config.se_active)
+            self.SM = new StateMachine(self.Config.sm_states, self.Config.sm_rules);
+        self.formCreateSettingsDiff = JSON.parse(self.Config.formcreate);
+    }
+    isRelationTable() {
+        return (this.TableType !== TableType.obj);
     }
     createRow(data, callback) {
         DB.request('create', { table: this.tablename, row: data }, r => { callback(r); });
     }
-    updateRow(RowID, new_data, callback) {
-        let data = new_data;
-        data[this.PriColname] = RowID;
-        DB.request('update', { table: this.tablename, row: new_data }, r => { callback(r); });
+    importData(data, callback) {
+        const self = this;
+        DB.request('import', data, r => {
+            callback(r);
+            self.callbackCreatedElement(r);
+        });
     }
-    transitRow(RowID, TargetStateID = null, trans_data = {}, callback) {
-        let data = trans_data;
-        data[this.PriColname] = RowID;
-        if (TargetStateID)
-            data['state_id'] = TargetStateID;
-        DB.request('makeTransition', { table: this.tablename, row: data }, r => { callback(r); });
+    updateRow(RowData, callback) {
+        DB.request('update', { table: this.tablename, row: RowData }, r => { callback(r); });
     }
     loadRow(RowID, callback) {
-        let data = { table: this.tablename, limit: 1, filter: {} };
-        data.filter = '{"=": ["' + this.PriColname + '", ' + RowID + ']}';
+        const data = { table: this.tablename, limit: 1, filter: '{"=":["' + this.PriColname + '", ' + RowID + ']}' };
         DB.request('read', data, r => { const row = r.records[0]; callback(row); });
     }
     loadRows(callback) {
-        let me = this;
-        let data = { table: me.tablename, sort: me.Sort };
+        const me = this;
+        const offset = me.PageIndex * me.PageLimit;
+        const data = { table: me.tablename };
+        if (me.Sort && me.Sort !== '')
+            data['sort'] = me.Sort;
         if (me.Filter && me.Filter !== '')
             data['filter'] = me.Filter;
         if (me.Search && me.Search !== '')
             data['search'] = me.Search;
-        const offset = me.PageIndex * me.PageLimit;
         if (me.PageLimit && me.PageLimit)
             data['limit'] = me.PageLimit + (offset == 0 ? '' : ',' + offset);
-        DB.request('read', data, r => { me.Rows = r.records; me.actRowCount = r.count; callback(r); });
+        DB.request('read', data, r => {
+            me.actRowCount = r.count;
+            me.Rows = r.records;
+            callback(r);
+        });
     }
+    getSelectType() { return this.selType; }
     getNrOfRows() { return this.actRowCount; }
     getTablename() { return this.tablename; }
     setSearch(searchText) { this.Search = searchText; }
     getSearch() { return this.Search; }
     getSortColname() { return this.Sort.split(',')[0]; }
-    getSortDir() {
-        let dir = this.Sort.split(',')[1];
-        if (!dir)
-            dir = "ASC";
-        return dir;
-    }
-    setSort(sortStr) { this.Sort = sortStr; }
-    setFilter(filterStr) {
-        if (filterStr && filterStr.trim().length > 0)
-            this.Filter = filterStr;
-    }
-    setColumnFilter(columnName, filterText) {
-        this.Filter = '{"=": ["' + columnName + '","' + filterText + '"]}';
-    }
-    resetFilter() { this.Filter = ''; }
-    resetLimit() { this.PageIndex = null; this.PageLimit = null; }
+    getSortDir() { return this.Sort.split(',')[1] || "ASC"; }
     getRows() { return this.Rows; }
     getConfig() { return this.Config; }
     getTableType() { return this.Config.table_type; }
     getPrimaryColname() { return this.PriColname; }
-    setRows(ArrOfRows) { this.Rows = ArrOfRows; }
     getTableIcon() { return this.getConfig().table_icon; }
     getTableAlias() { return this.getConfig().table_alias; }
-}
-class Table extends RawTable {
-    constructor(tablename, SelType = SelectType.NoSelect) {
-        super(tablename);
-        this.SM = null;
-        this.isExpanded = true;
-        this.selType = SelectType.NoSelect;
-        this.customFormCreateOptions = {};
-        this.diffFormCreateObject = {};
-        this.TableType = TableType.obj;
-        this.GUIOptions = {
-            maxCellLength: 50,
-            showControlColumn: true,
-            showWorkflowButton: false,
-            smallestTimeUnitMins: true,
-            Relation: {
-                createTitle: "New Relation",
-                createBtnRelate: "Add Relation"
-            },
-            modalHeaderTextCreate: 'Create Entry',
-            modalHeaderTextModify: 'Modify Entry',
-            modalButtonTextCreate: 'Create',
-            modalButtonTextModifySave: 'Save',
-            modalButtonTextModifySaveAndClose: 'Save &amp; Close',
-            modalButtonTextModifyClose: 'Close',
-            filterPlaceholderText: 'Search...',
-            statusBarTextNoEntries: 'No Entries',
-            statusBarTextEntries: 'Showing Entries {lim_from} - {lim_to} of {count} Entries'
-        };
-        this.onSelectionChanged = new LiteEvent();
-        this.onEntriesModified = new LiteEvent();
-        this.GUID = DB.getID();
-        this.selType = SelType;
-        this.selectedRow = undefined;
-        this.TableType = this.getConfig().table_type;
-        this.setSort(this.getConfig().stdsorting);
-        this.ReadOnly = (this.getConfig().mode == 'ro');
-        if (this.getConfig().se_active)
-            this.SM = new StateMachine(this, this.getConfig().sm_states, this.getConfig().sm_rules);
-        if (!this.ReadOnly)
-            this.diffFormCreateObject = JSON.parse(this.getConfig().formcreate);
+    setSort(sortStr) { this.Sort = sortStr; }
+    setFilter(filterStr) { if (filterStr && filterStr.trim().length > 0)
+        this.Filter = filterStr; }
+    setColumnFilter(columnName, filterText) { this.Filter = '{"=": ["' + columnName + '","' + filterText + '"]}'; }
+    setRows(ArrOfRows) { this.actRowCount = ArrOfRows.length; this.Rows = ArrOfRows; }
+    resetFilter() { this.Filter = ''; }
+    resetLimit() { this.PageIndex = null; this.PageLimit = null; }
+    getFormCreateDefault() {
+        const me = this;
+        let FormObj = {};
+        for (const colname of Object.keys(me.Columns)) {
+            const ColObj = me.Columns[colname];
+            FormObj[colname] = ColObj;
+            if (ColObj.field_type == 'foreignkey')
+                FormObj[colname]['fk_table'] = ColObj.foreignKey.table;
+        }
+        return FormObj;
     }
-    isRelationTable() {
-        return (this.TableType !== TableType.obj);
+    getFormCreateSettingsDiff() {
+        return this.formCreateSettingsDiff;
     }
-    getTableType() {
-        return this.TableType;
+    getFormCreate() {
+        const defaultForm = this.getFormCreateDefault();
+        const diffForm = this.formCreateSettingsDiff;
+        return DB.mergeDeep({}, defaultForm, diffForm);
     }
-    setCustomFormCreateOptions(customData) {
-        this.customFormCreateOptions = customData;
+    getFormModify(row) {
+        const stdForm = this.getFormCreateDefault();
+        let diffFormState = {};
+        let combinedForm = {};
+        if (this.hasStateMachine()) {
+            const actStateID = row['state_id'];
+            diffFormState = this.SM.getFormDiffByState(actStateID);
+        }
+        combinedForm = DB.mergeDeep({}, stdForm, diffFormState);
+        return combinedForm;
     }
-    toggleSort(ColumnName) {
-        let t = this;
-        const SortDir = (t.getSortDir() == SortOrder.DESC) ? SortOrder.ASC : SortOrder.DESC;
-        this.setSort(ColumnName + ',' + SortDir);
-        this.loadRows(() => { t.renderContent(); });
+    setPath(newPath) {
+        this.Path = newPath;
     }
-    setPageIndex(targetIndex) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let me = this;
-            var newIndex = targetIndex;
-            var lastPageIndex = this.getNrOfPages() - 1;
-            if (targetIndex < 0)
-                newIndex = 0;
-            if (targetIndex > lastPageIndex)
-                newIndex = lastPageIndex;
-            this.PageIndex = newIndex;
-            this.loadRows(function () {
-                return __awaiter(this, void 0, void 0, function* () {
-                    yield me.renderContent();
-                    yield me.renderFooter();
-                });
-            });
-        });
-    }
-    getNrOfPages() {
-        const PageLimit = this.PageLimit || this.getNrOfRows();
-        return Math.ceil(this.getNrOfRows() / PageLimit);
+    getPath() {
+        return this.Path;
     }
     getPaginationButtons() {
         const MaxNrOfButtons = 5;
-        var NrOfPages = this.getNrOfPages();
+        var NrOfPages = Math.ceil(this.getNrOfRows() / this.PageLimit);
         if (NrOfPages <= MaxNrOfButtons) {
             var pages = new Array(NrOfPages);
             for (var i = 0; i < pages.length; i++)
@@ -467,696 +625,924 @@ class Table extends RawTable {
         }
         return pages;
     }
-    renderEditForm(Row, diffObject, ExistingModal = undefined) {
+    getSelectedIDs() {
+        const pcname = this.getPrimaryColname();
+        return this.selectedRows.map(el => { return el[pcname]; });
+    }
+    setSelectedRows(selRowData) {
+        this.selectedRows = selRowData;
+    }
+    addSelectedRow(row) {
+        if (this.selType === SelectType.Single)
+            this.selectedRows = [];
+        this.selectedRows.push(row);
+    }
+    hasStateMachine() {
+        return !!this.SM;
+    }
+    onSelectionChanged(callback) { this.callbackSelectionChanged = callback; }
+    onCreatedElement(callback) { this.callbackCreatedElement = callback; }
+    onSelectElement(callback) { this.callbackSelectElement = callback; }
+    onUnselectElement(callback) { this.callbackUnselectElement = callback; }
+    getCreateButton(table = null) {
+        const self = this;
+        if (!table)
+            table = self;
+        const createBtnElement = document.createElement('a');
+        createBtnElement.classList.add('tbl_createbtn');
+        createBtnElement.setAttribute('href', `javascript:void(0);`);
+        createBtnElement.innerText = '+ ' + table.getTableAlias();
+        createBtnElement.classList.add('btn', 'btn-success', 'mr-1');
+        createBtnElement.addEventListener('click', () => {
+            const createForm = new Form(table);
+            createForm.setNewOriginTable(self);
+            self.DOMContainer.replaceWith(createForm.getForm());
+            createForm.focusFirst();
+        });
+        return createBtnElement;
+    }
+    getWorkflowButton() {
+        const createBtnElement = document.createElement('a');
+        createBtnElement.classList.add('tbl_workflowbtn');
+        createBtnElement.setAttribute('href', `#/${this.getTablename()}/workflow`);
+        createBtnElement.innerText = gText[setLang].Workflow;
+        createBtnElement.classList.add('btn', 'btn-info', 'mr-1');
+        return createBtnElement;
+    }
+    getSearchBar() {
         const t = this;
-        let defaultFormObj = t.getDefaultFormObject();
-        let newObj = mergeDeep({}, defaultFormObj, diffObject);
-        for (const key of Object.keys(Row)) {
-            newObj[key].value = Row[key];
-        }
-    }
-    getSelectedRowID() {
-        return this.selectedRow[this.getPrimaryColname()];
-    }
-    setState(data, RowID, targetStateID, callback) {
-        let t = this;
-        let actStateID = null;
-        for (const row of t.Rows) {
-            if (row[t.getPrimaryColname()] == RowID)
-                actStateID = row['state_id'];
-        }
-        t.transitRow(RowID, targetStateID, data, function (response) {
-            t.onEntriesModified.trigger();
-            let counter = 0;
-            const messages = [];
-            response.forEach(msg => {
-                if (msg.show_message)
-                    messages.push({ type: counter, text: msg.message });
-                counter++;
+        const searchBarElement = document.createElement('input');
+        searchBarElement.setAttribute('type', "text");
+        searchBarElement.setAttribute('placeholder', gText[setLang].Search);
+        searchBarElement.classList.add('tbl_searchbar');
+        searchBarElement.classList.add('form-control', 'd-inline-block', 'w-50', 'w-lg-25', 'mr-1');
+        const dHandler = DB.debounce(250, () => {
+            t.setSearch(searchBarElement.value);
+            t.loadRows(() => {
+                t.reRenderRows();
             });
-            messages.reverse();
-            const htmlStateFrom = t.renderStateButton(actStateID, false);
-            const htmlStateTo = t.renderStateButton(targetStateID, false);
-            for (const msg of messages) {
-                let title = '';
-                if (msg.type == 0)
-                    title = `OUT <span class="text-muted ml-2">${htmlStateFrom} &rarr;</span>`;
-                if (msg.type == 1)
-                    title = `Transition <span class="text-muted ml-2">${htmlStateFrom} &rarr; ${htmlStateTo}</span>`;
-                if (msg.type == 2)
-                    title = `IN <span class="text-muted ml-2">&rarr; ${htmlStateTo}</span>`;
-                const resM = new Modal(title, msg.text);
-                resM.options.btnTextClose = t.GUIOptions.modalButtonTextModifyClose;
-                resM.show();
-            }
-            if (counter === 3)
-                callback();
         });
+        searchBarElement.addEventListener("input", dHandler);
+        return searchBarElement;
     }
-    getDefaultFormObject() {
-        const me = this;
-        let FormObj = {};
-        for (const colname of Object.keys(me.Columns)) {
-            const ColObj = me.Columns[colname];
-            FormObj[colname] = ColObj;
-            if (ColObj.field_type == 'foreignkey')
-                FormObj[colname]['fk_table'] = ColObj.foreignKey.table;
-        }
-        return FormObj;
-    }
-    modifyRow(id) {
-        let t = this;
-        const pcname = t.getPrimaryColname();
-        if (t.selType == SelectType.Single) {
-            t.selectedRow = t.Rows[id];
-            for (const row of t.Rows) {
-                if (row[pcname] == id) {
-                    t.selectedRow = row;
-                    break;
-                }
-            }
-            document.getElementById(t.GUID).parentElement.innerHTML = `<span class="d-block text-muted" style="margin-top:.4rem;">${t.getTablename() + ' &rarr; ' + id}</span>`;
-            t.onSelectionChanged.trigger();
-            return;
-        }
-        else {
-            if (t.ReadOnly) {
-                alert("Can not modify!\nTable \"" + t.getTablename() + "\" is read-only!");
-                return;
-            }
-            let TheRow = null;
-            this.Rows.forEach(row => { if (row[pcname] == id)
-                TheRow = row; });
-            if (t.SM) {
-                const diffJSON = t.SM.getFormDiffByState(TheRow.state_id);
-                t.renderEditForm(TheRow, diffJSON, null);
-            }
-        }
-    }
-    renderStateButton(StateID, withDropdown, altName = undefined) {
-        const name = altName || this.SM.getStateNameById(StateID);
-        const cssClass = 'state' + StateID;
-        if (withDropdown) {
-            return `<div class="dropdown">
-            <button title="State-ID: ${StateID}" class="btn dropdown-toggle btnState btnGrid btnEnabled loadStates btn-sm label-state ${cssClass}"
-              data-stateid="${StateID}" data-toggle="dropdown">${name}</button>
-            <div class="dropdown-menu p-0">
-              <p class="m-0 p-3 text-muted"><i class="fa fa-spinner fa-pulse"></i> Loading...</p>
-            </div>
-          </div>`;
-        }
-        else {
-            return `<button title="State-ID: ${StateID}" onclick="return false;" class="btn btnState btnGrid btnDisabled btn-sm label-state ${cssClass}">${name}</button>`;
-        }
-    }
-    formatCellFK(colname, cellData) {
-        const showColumns = this.Columns[colname].foreignKey.col_subst;
-        let cols = [];
-        Object.keys(cellData).forEach(c => {
-            if (showColumns === '*' || showColumns.indexOf(c) >= 0) {
-                let subCell = {};
-                subCell[c] = cellData[c];
-                cols.push(subCell);
-            }
-        });
-        return cols;
-    }
-    formatCell(colname, cellContent, isHTML = false, mainRowID) {
-        if (isHTML)
-            return cellContent;
-        if (typeof cellContent == 'string') {
-            if (cellContent.length > this.GUIOptions.maxCellLength)
-                return escapeHtml(cellContent.substr(0, this.GUIOptions.maxCellLength) + "\u2026");
-        }
-        else if ((typeof cellContent === "object") && (cellContent !== null)) {
-            let cols = this.formatCellFK(colname, cellContent);
-            let content = '';
-            const split = (100 * (1 / cols.length)).toFixed(0);
-            const firstEl = cellContent;
-            const fTablename = this.Columns[colname].foreignKey.table;
-            let rowID = null;
-            let fTbl = new Table(fTablename);
-            cols.forEach(col => {
-                let htmlCell = col;
-                if (isObject(col)) {
-                    const vals = recflattenObj(col);
-                    let v = vals.join(' | ');
-                    v = v.length > 55 ? v.substring(0, 55) + "\u2026" : v;
-                    htmlCell = v;
-                }
-                if (fTbl)
-                    htmlCell = fTbl.renderCell(col, Object.keys(col)[0]);
-                content += '<td class="border-0" style="width: ' + split + '%;">' + htmlCell + '</td>';
-            });
-            if (fTbl && !fTbl.ReadOnly) {
-                rowID = firstEl[Object.keys(firstEl)[0]];
-                const path = location.hash.split('/');
-                path.shift();
-                if (path.length === 1)
-                    path.push(mainRowID.toString());
-                path.push(fTablename, rowID);
-                content = `<td style="max-width: 30px; width: 30px;" class="border-0 controllcoulm align-middle">
-        <a href="#/${path.join('/')}"><i class="far fa-edit"></i></a></td>` + content;
-            }
-            return `<table class="w-100 h-100 p-0 m-0 border-0" style="white-space: nowrap;"><tr data-rowid="${fTablename}:${rowID}">${content}</tr></table>`;
-        }
-        return escapeHtml(cellContent);
-    }
-    renderCell(row, col) {
-        let t = this;
-        let value = row[col];
-        if (!value)
-            return '&nbsp;';
-        if (t.Columns[col].field_type == 'date') {
-            let tmp = new Date(value);
-            if (!isNaN(tmp.getTime()))
-                value = tmp.toLocaleDateString('de-DE');
-            else
-                value = '';
-            return value;
-        }
-        else if (t.Columns[col].field_type == 'time') {
-            if (t.GUIOptions.smallestTimeUnitMins) {
-                let timeArr = value.split(':');
-                timeArr.pop();
-                value = timeArr.join(':');
-                return value;
-            }
-        }
-        else if (t.Columns[col].field_type == 'datetime') {
-            let tmp = new Date(value);
-            if (!isNaN(tmp.getTime())) {
-                value = tmp.toLocaleString('de-DE');
-                if (t.GUIOptions.smallestTimeUnitMins) {
-                    let timeArr = value.split(':');
-                    timeArr.pop();
-                    value = timeArr.join(':');
-                }
-            }
-            else
-                value = '';
-            return value;
-        }
-        else if (t.Columns[col].field_type == 'rawhtml') {
-            return value;
-        }
-        else if (t.Columns[col].field_type == 'number') {
-            const number = parseInt(value);
-            return number.toString();
-        }
-        else if (t.Columns[col].field_type == 'float') {
-            const number = parseFloat(value);
-            return number.toLocaleString('de-DE');
-        }
-        else if (t.Columns[col].field_type == 'switch' || t.Columns[col].field_type == 'checkbox') {
-            return parseInt(value) !== 0 ? '<i class="fa fa-check text-success "></i>' : '<i class="fa fa-times text-danger"></i>';
-        }
-        else if (t.Columns[col].field_type == 'state') {
-            const stateID = value;
-            const isExitNode = t.SM.isExitNode(stateID);
-            const withDropdown = !(t.ReadOnly || isExitNode);
-            return t.renderStateButton(stateID, withDropdown);
-        }
-        else if (col == 'name' && t.getTablename() == 'state') {
-            const stateID = parseInt(row['state_id']);
-            return t.renderStateButton(stateID, false, value);
-        }
-        else if ((col == 'state_id_FROM' || col == 'state_id_TO') && t.getTablename() == 'state_rules') {
-            const stateID = parseInt(value['state_id']);
-            return t.renderStateButton(stateID, false, value['name']);
-        }
-        const isHTML = t.Columns[col].is_virtual || t.Columns[col].field_type == 'htmleditor';
-        value = t.formatCell(col, value, isHTML, row[t.getPrimaryColname()]);
-        return value;
-    }
-    htmlHeaders(colnames) {
-        let t = this;
-        let th = '';
-        if (t.GUIOptions.showControlColumn && !t.ReadOnly) {
-            th = `<th class="border-0 align-middle text-center" style="max-width:50px;width:50px;"></th>`;
-            if (t.TableType !== TableType.obj && t.selType !== SelectType.Single) {
-                const cols = [];
-                colnames.map(col => {
-                    if (t.Columns[col].field_type == 'foreignkey')
-                        cols.push(col);
-                });
-                const colM = cols[1];
-                const objTable2 = t.Columns[colM].foreignKey.table;
-                th = `<th class="border-0 align-middle text-center" style="max-width:50px;width:50px;">
-          <a href="${location.hash + '/' + t.getTablename() + '/create/' + objTable2 + '/create'}"><i class="fa fa-plus text-success"></i></a>
-          <a href="${location.hash + '/' + t.getTablename() + '/create'}" class="ml-2"><i class="fa fa-link text-success"></i></a>
-        </th>`;
-            }
-            else if (t.TableType === TableType.obj && t.selType === SelectType.Single) {
-                th = '<th class="border-0 align-middle text-center" style="max-width:50px;width:50px;"><a href="' + location.hash + '/' + t.getTablename() +
-                    '/create"><i class="fa fa-plus text-success"></i></a></th>';
-            }
-        }
-        for (const colname of colnames) {
-            if (t.Columns[colname].show_in_grid) {
-                const ordercol = t.getSortColname();
-                const orderdir = t.getSortDir();
-                th += `<th data-colname="${colname}" ${(['state_id', 'state_id_FROM', 'state_id_TO'].indexOf(colname) >= 0) ? 'style="max-width:80px;width:80px;" ' : ''}class="border-0 p-0 align-middle datatbl_header${colname == ordercol ? ' sorted' : ''}">` +
-                    '<div class="float-left pl-1 pb-1">' + t.Columns[colname].column_alias + '</div>' +
-                    '<div class="float-right pr-3">' + (colname == ordercol ?
-                    '&nbsp;' + (orderdir == SortOrder.ASC ? '<i class="fa fa-sort-up"></i>' : (orderdir == SortOrder.DESC ? '<i class="fa fa-sort-down"></i>' : '')) + '' : '') +
-                    '</div>';
-                if (t.Columns[colname].field_type == 'foreignkey') {
-                    let cols = {};
-                    try {
-                        cols = JSON.parse(t.Columns[colname].foreignKey.col_subst);
-                    }
-                    catch (error) {
-                        cols[t.Columns[colname].foreignKey.col_subst] = 1;
-                    }
-                    const colsnames = Object.keys(cols);
-                    if (colsnames.length > 1) {
-                        let subheaders = '';
-                        let tmpTable = new Table(t.Columns[colname].foreignKey.table);
-                        const split = (100 * (1 / colsnames.length)).toFixed(0);
-                        for (const c of colsnames) {
-                            const tmpAlias = tmpTable.Columns[c].column_alias;
-                            subheaders += '<td class="border-0 align-middle" style="width: ' + split + '%">' + tmpAlias + '</td>';
-                        }
-                        ;
-                        th += `<table class="w-100 border-0"><tr>${subheaders}</tr></table>`;
-                    }
-                }
-                th += '<div class="clearfix"></div>';
-                th += '</th>';
-            }
-        }
-        return th;
-    }
-    getContent() {
-        let t = this;
-        let tds = '';
-        const pcname = t.getPrimaryColname();
-        if (!t.isExpanded)
-            return '';
-        function compare(a, b) {
-            a = parseInt(t.Columns[a].col_order);
-            b = parseInt(t.Columns[b].col_order);
-            return a < b ? -1 : (a > b ? 1 : 0);
-        }
-        const sortedColumnNames = Object.keys(t.Columns).sort(compare);
-        const ths = t.htmlHeaders(sortedColumnNames);
-        t.Rows.forEach(function (row) {
-            const RowID = row[pcname];
-            let data_string = '';
-            let isSelected = false;
-            if (t.selectedRow)
-                isSelected = (t.selectedRow[pcname] == RowID);
-            if (t.GUIOptions.showControlColumn && !t.ReadOnly) {
-                const path = location.hash.split('/');
-                const loc = (path.length === 2) ? '#' : path.join('/');
-                data_string = `<td class="controllcoulm align-middle">
-          ${(t.selType == SelectType.Single ? (isSelected ?
-                    '<i class="far fa-check-circle"></i>' : '<span class="modRow"><i class="far fa-circle"></i></span>')
-                    : (t.TableType == TableType.obj ?
-                        `<a href="${loc}/${t.getTablename()}/${RowID}"><i class="far fa-edit"></i></a>` :
-                        `<a href="${loc}/${t.getTablename()}/${RowID}"><i class="fas fa-link"></i></a>`))}
-        </td>`;
-            }
-            sortedColumnNames.forEach(function (col) {
-                if (t.Columns[col].show_in_grid) {
-                    data_string += '<td ' + (t.Columns[col].field_type === 'foreignkey' ? ' class="p-0 m-0 h-100"' : '') + '>' + t.renderCell(row, col) + '</td>';
-                }
-            });
-            if (t.GUIOptions.showControlColumn) {
-                tds += `<tr class="${(isSelected ? ' table-info' : '')}" data-rowid="${t.getTablename() + ':' + row[pcname]}">${data_string}</tr>`;
-            }
-            else {
-                if (t.ReadOnly) {
-                    tds += '<tr data-rowid="' + t.getTablename() + ':' + row[pcname] + '">' + data_string + '</tr>';
-                }
-                else {
-                    tds += '<tr class="editFullRow modRow" data-rowid="' + t.getTablename() + ':' + row[pcname] + '">' + data_string + '</tr>';
-                }
-            }
-        });
-        return `<div class="tbl_content ${((t.selType == SelectType.Single && !t.isExpanded) ? ' collapse' : '')}" id="${t.GUID}">
-      ${(t.Rows && t.Rows.length > 0) ?
-            `<div class="tablewrapper border table-responsive-md">
-        <table class="table table-striped table-hover m-0 table-sm datatbl">
-          <thead>
-            <tr>${ths}</tr>
-          </thead>
-          <tbody>
-            ${tds}
-          </tbody>
-        </table>
-      </div>` : (t.getSearch() != '' ? 'Sorry, nothing found.' : '')}
-    </div>`;
+    getStatusText() {
+        const statusTextElement = document.createElement('span');
+        statusTextElement.classList.add('tbl_statustext');
+        statusTextElement.innerText = (this.getNrOfRows() > 0 && this.Rows.length > 0) ?
+            gText[setLang].entriesStats
+                .replace('{lim_from}', '' + ((this.PageIndex * this.PageLimit) + 1))
+                .replace('{lim_to}', '' + ((this.PageIndex * this.PageLimit) + this.Rows.length))
+                .replace('{count}', '' + (this.getNrOfRows()))
+            :
+                gText[setLang].noEntries;
+        return statusTextElement;
     }
     getFooter() {
-        let t = this;
+        const t = this;
+        const footerElement = document.createElement('div');
+        footerElement.classList.add('tbl_footer');
         if (!t.Rows || t.Rows.length <= 0)
-            return '<div class="tbl_footer"></div>';
-        let pgntn = '';
-        let PaginationButtons = t.getPaginationButtons();
-        if (PaginationButtons.length > 1) {
-            PaginationButtons.forEach(btnIndex => {
-                if (t.PageIndex == t.PageIndex + btnIndex) {
-                    pgntn += `<li class="page-item active"><span class="page-link">${t.PageIndex + 1 + btnIndex}</span></li>`;
-                }
-                else {
-                    pgntn += `<li class="page-item"><a href="${window.location}" class="page-link" data-pageindex="${t.PageIndex + btnIndex}">${t.PageIndex + 1 + btnIndex}</a></li>`;
-                }
+            return footerElement;
+        if ((t.selType !== SelectType.NoSelect) && !t.isExpanded)
+            return footerElement;
+        if ((t.TableType == TableType.t1_1 || t.TableType == TableType.tn_1) && t.getNrOfRows() === 1)
+            return footerElement;
+        const pageButtons = t.getPaginationButtons();
+        if (pageButtons.length > 1) {
+            const paginationElement = document.createElement('nav');
+            paginationElement.classList.add('float-right');
+            const btnList = document.createElement('ul');
+            btnList.classList.add('pagination', 'pagination-sm', 'm-0', 'my-1');
+            paginationElement.appendChild(btnList);
+            pageButtons.forEach(btnIndex => {
+                const actPage = t.PageIndex + btnIndex;
+                const btn = document.createElement('li');
+                btn.classList.add('page-item');
+                if (t.PageIndex === actPage)
+                    btn.classList.add('active');
+                const pageLinkEl = document.createElement('a');
+                pageLinkEl.setAttribute('href', 'javascript:void(0);');
+                pageLinkEl.innerText = `${actPage + 1}`;
+                pageLinkEl.addEventListener('click', () => {
+                    t.PageIndex = actPage;
+                    t.loadRows(() => { t.renderHTML(); });
+                });
+                pageLinkEl.classList.add('page-link');
+                btn.appendChild(pageLinkEl);
+                btnList.appendChild(btn);
             });
+            footerElement.appendChild(paginationElement);
+            const statusTextElem = t.getStatusText();
+            footerElement.appendChild(statusTextElem);
         }
-        if (t.selType == SelectType.Single && !t.isExpanded)
-            return `<div class="tbl_footer"></div>`;
-        if ((t.TableType == TableType.t1_1 || t.TableType == TableType.tn_1) && t.actRowCount === 1)
-            return `<div class="tbl_footer"></div>`;
-        let statusText = '';
-        if (this.getNrOfRows() > 0 && this.Rows.length > 0) {
-            let text = this.GUIOptions.statusBarTextEntries;
-            text = text.replace('{lim_from}', '' + ((this.PageIndex * this.PageLimit) + 1));
-            text = text.replace('{lim_to}', '' + ((this.PageIndex * this.PageLimit) + this.Rows.length));
-            text = text.replace('{count}', '' + this.getNrOfRows());
-            statusText = text;
+        const clearing = document.createElement('div');
+        clearing.setAttribute('style', 'clear:both;');
+        footerElement.appendChild(clearing);
+        return footerElement;
+    }
+    getHeader() {
+        const self = this;
+        const header = document.createElement('div');
+        header.setAttribute('class', 'tbl_header mb-1');
+        if (self.selType === SelectType.NoSelect)
+            header.classList.add('mt-3');
+        if (this.selectedRows.length > 0 && !this.isExpanded)
+            return header;
+        if (this.ReadOnly && this.actRowCount < self.PageLimit)
+            return header;
+        if (this.options.showSearch) {
+            const searchBar = this.getSearchBar();
+            header.appendChild(searchBar);
+            searchBar.focus();
+        }
+        const subtypes = (this.getTablename() == 'partner') ? ['person', 'organization'] : null;
+        if (subtypes) {
+            subtypes.map(subtype => {
+                const tmpTable = new Table(subtype);
+                const tmpCreateBtn = this.getCreateButton(tmpTable);
+                header.appendChild(tmpCreateBtn);
+            });
         }
         else {
-            statusText = this.GUIOptions.statusBarTextNoEntries;
+            if (!this.ReadOnly && this.options.showCreateButton) {
+                header.appendChild(self.getCreateButton(self));
+            }
         }
-        return `<div class="tbl_footer">
-      <div class="text-muted p-0 px-2">
-        <p class="float-left m-0 mb-1"><small>${statusText}</small></p>
-        <nav class="float-right"><ul class="pagination pagination-sm m-0 my-1">${pgntn}</ul></nav>
-        <div class="clearfix"></div>
-      </div>
-    </div>`;
+        if (this.SM && this.options.showWorkflowButton) {
+            header.appendChild(this.getWorkflowButton());
+        }
+        return header;
     }
-    renderContent() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let t = this;
-            const output = yield t.getContent();
-            const tableEl = document.getElementById(t.GUID);
-            tableEl.innerHTML = output;
-            let els = null;
-            els = tableEl.getElementsByClassName('datatbl_header');
-            if (els) {
-                for (const el of els) {
-                    el.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const colname = el.getAttribute('data-colname');
-                        t.toggleSort(colname);
+    renderGridElement(options, rowID, value) {
+        let element = document.createElement('span');
+        element.classList.add('datacell');
+        if (options.column.field_type === 'switch' || options.column.field_type === 'checkbox') {
+            element.innerHTML = value == "1" ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>';
+        }
+        else if (options.column.field_type === 'state') {
+            const self = this;
+            const rowData = {};
+            rowData[options.table.getPrimaryColname()] = rowID;
+            rowData[options.name] = value;
+            const SB = new StateButton(rowData, options.name);
+            SB.setTable(options.table);
+            SB.setOnSuccess(() => {
+                self.loadRows(() => {
+                    self.reRenderRows();
+                });
+            });
+            element.appendChild(SB.getElement());
+        }
+        else if (options.column.field_type === 'rawhtml' || options.column.field_type === 'htmleditor') {
+            element.innerHTML = value;
+        }
+        else if (options.column.field_type === 'date') {
+            if (value) {
+                const prts = value.split('-');
+                if (setLang == 'en')
+                    element.innerText = prts[1] + '/' + prts[2] + '/' + prts[0];
+                if (setLang == 'de')
+                    element.innerText = prts[2] + '.' + prts[1] + '.' + prts[0];
+            }
+        }
+        else if (options.column.field_type === 'time') {
+        }
+        else if (options.column.field_type === 'datetime') {
+        }
+        else if (options.column.field_type === 'float') {
+            if (value) {
+                element = document.createElement('div');
+                element.classList.add('num-float');
+                element.classList.add('text-right');
+                element.innerText = Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            else
+                return element;
+        }
+        else
+            element.innerText = value;
+        return element;
+    }
+    getTable() {
+        const self = this;
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('tbl_content');
+        wrapper.classList.add('table-responsive-md');
+        if (!self.isExpanded && self.selectedRows.length === 0 && self.Search === "" && self.selType > 0)
+            return wrapper;
+        const tbl = document.createElement('table');
+        tbl.classList.add('datatbl');
+        tbl.classList.add('table', 'table-striped', 'table-hover', 'table-sm', 'm-0', 'border');
+        wrapper.appendChild(tbl);
+        const allowedCols = Object.keys(self.Columns).filter(col => self.Columns[col].show_in_grid);
+        const sortedCols = allowedCols.sort((a, b) => Math.sign(self.Columns[a].col_order - self.Columns[b].col_order));
+        const expandedCols = [];
+        const aliasCols = [];
+        const optionCols = [];
+        sortedCols.map(col => {
+            if (self.Columns[col].field_type === "foreignkey") {
+                const fkTable = new Table(self.Columns[col].foreignKey.table);
+                let Count = 0;
+                Object.keys(fkTable.Columns).map(fcol => {
+                    if (!fkTable.Columns[fcol].is_virtual && fkTable.Columns[fcol].show_in_grid) {
+                        expandedCols.push('`' + self.getTablename() + '/' + col + '`.' + fcol);
+                        aliasCols.push(fkTable.Columns[fcol].column_alias);
+                        optionCols.push({ name: fcol, table: fkTable, column: fkTable.Columns[fcol] });
+                        Count++;
+                    }
+                });
+                if (Count === 1) {
+                    aliasCols.pop();
+                    aliasCols.push(self.Columns[col].column_alias);
+                }
+            }
+            else {
+                expandedCols.push('`' + self.getTablename() + '`.' + col);
+                aliasCols.push(self.Columns[col].column_alias);
+                optionCols.push({ name: col, table: self, column: self.Columns[col] });
+            }
+        });
+        if (!self.ReadOnly) {
+            expandedCols.unshift("edit");
+            aliasCols.unshift("Edit");
+            optionCols.unshift("Edit");
+        }
+        if (self.selType === SelectType.Single || self.selType === SelectType.Multi) {
+            expandedCols.unshift("select");
+            aliasCols.unshift("Select");
+            optionCols.unshift("Select");
+        }
+        const thead = document.createElement('thead');
+        const tr = document.createElement('tr');
+        thead.appendChild(tr);
+        tbl.appendChild(thead);
+        expandedCols.map((colname, index) => {
+            const th = document.createElement('th');
+            if (colname === "select") {
+                th.classList.add('col-sel');
+                if (!self.isExpanded) {
+                    th.innerHTML = '<i class="fas fa-chevron-down text-primary"></i>';
+                    th.addEventListener('click', () => {
+                        self.resetFilter();
+                        self.isExpanded = true;
+                        self.loadRows(() => {
+                            self.renderHTML();
+                        });
                     });
                 }
             }
-            els = tableEl.getElementsByClassName('modRow');
-            if (els) {
-                for (const el of els) {
-                    el.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const RowData = el.parentNode.parentNode.getAttribute('data-rowid').split(':');
-                        const Tablename = RowData[0];
-                        const ID = RowData[1];
-                        if (t.getTablename() !== Tablename) {
-                            const tmpTable = new Table(Tablename);
-                            tmpTable.loadRow(ID, function (Row) {
-                                tmpTable.setRows([Row]);
-                                tmpTable.modifyRow(ID);
-                            });
-                        }
-                        else
-                            t.modifyRow(ID);
-                    });
+            else if (colname === "edit")
+                th.classList.add('col-edit');
+            else {
+                let sortHTML = '<i class="fas fa-sort mr-1 text-muted"></i>';
+                if (colname.split('.').pop() === self.getSortColname().split('.').pop()) {
+                    if (self.getSortDir() === 'DESC')
+                        sortHTML = '<i class="fas fa-sort-down mr-1"></i>';
+                    else if (self.getSortDir() === 'ASC')
+                        sortHTML = '<i class="fas fa-sort-up mr-1"></i>';
                 }
+                if (optionCols[index].column.field_type === 'float')
+                    th.classList.add('text-right');
+                th.innerHTML = sortHTML + aliasCols[index];
+                th.addEventListener('click', () => {
+                    let newSortDir = "ASC";
+                    if (colname.split('.').pop() === self.getSortColname().split('.').pop()) {
+                        newSortDir = (self.getSortDir() === "ASC") ? "DESC" : null;
+                    }
+                    if (newSortDir)
+                        self.setSort(`${colname},${newSortDir}`);
+                    else
+                        self.setSort('');
+                    self.loadRows(() => { self.reRenderRows(); });
+                });
             }
-            els = tableEl.getElementsByClassName('loadStates');
-            if (els) {
-                for (const el of els) {
-                    el.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        const DropDownMenu = el.parentNode.querySelectorAll('.dropdown-menu')[0];
-                        const StateID = el.getAttribute('data-stateid');
-                        const RowData = el.parentNode.parentNode.parentNode.getAttribute('data-rowid').split(':');
-                        const Tablename = RowData[0];
-                        const ID = RowData[1];
-                        if (DropDownMenu.classList.contains("show"))
-                            return;
-                        if (Tablename === t.getTablename()) {
-                            const nextstates = t.SM.getNextStates(StateID);
-                            if (nextstates.length > 0) {
-                                DropDownMenu.innerHTML = '';
-                                nextstates.map(state => {
-                                    const btn = document.createElement('a');
-                                    btn.classList.add('dropdown-item', 'btnState', 'btnEnabled', 'state' + state.id);
-                                    btn.setAttribute('href', 'javascript:void(0)');
-                                    btn.innerText = state.name;
-                                    btn.addEventListener("click", function (e) {
-                                        e.preventDefault();
-                                        t.setState({}, ID, state.id, function () {
-                                            t.loadRows(function () { t.renderContent(); });
-                                        });
-                                    });
-                                    DropDownMenu.appendChild(btn);
-                                });
+            tr.appendChild(th);
+        });
+        const tbody = document.createElement('tbody');
+        tbl.appendChild(tbody);
+        self.Rows.map(row => {
+            const tr = document.createElement('tr');
+            expandedCols.map((colname, index) => {
+                const td = document.createElement('td');
+                if (colname === "select") {
+                    td.classList.add('col-sel');
+                    const cb = document.createElement('input');
+                    cb.setAttribute('type', 'checkbox');
+                    td.appendChild(cb);
+                    cb.addEventListener('click', e => {
+                        if (cb.checked) {
+                            const allCheckboxes = cb.parentElement.parentElement.parentElement.querySelectorAll('input[type=checkbox]');
+                            if (self.selType === SelectType.Single) {
+                                allCheckboxes.forEach((checkB) => checkB.checked = false);
+                                self.selectedRows = [];
                             }
+                            cb.checked = true;
+                            self.selectedRows.push(row);
+                            self.callbackSelectElement(row);
                         }
                         else {
-                            const tmpTable = new Table(Tablename);
-                            tmpTable.loadRow(ID, function (Row) {
-                                tmpTable.setRows([Row]);
-                                const nextstates = tmpTable.SM.getNextStates(Row['state_id']);
-                                if (nextstates.length > 0) {
-                                    DropDownMenu.innerHTML = '';
-                                    nextstates.map(state => {
-                                        const btn = document.createElement('a');
-                                        btn.classList.add('dropdown-item', 'btnState', 'btnEnabled', 'state' + state.id);
-                                        btn.setAttribute('href', 'javascript:void(0)');
-                                        btn.text = state.name;
-                                        btn.addEventListener("click", function () {
-                                            tmpTable.setState({}, ID, state.id, function () {
-                                                t.loadRows(function () { t.renderContent(); });
-                                            });
-                                        });
-                                        DropDownMenu.appendChild(btn);
-                                    });
-                                }
-                            });
+                            const pcol = self.getPrimaryColname();
+                            self.selectedRows = self.selectedRows.filter(r => r[pcol] !== row[pcol]);
+                            self.callbackUnselectElement(row);
                         }
+                        self.callbackSelectionChanged(self.selectedRows);
                     });
+                    const pcol = self.getPrimaryColname();
+                    const inSel = self.selectedRows.filter(r => r[pcol] === row[pcol]);
+                    if (inSel.length > 0) {
+                        cb.checked = true;
+                        self.callbackSelectionChanged(self.selectedRows);
+                    }
                 }
-            }
-        });
-    }
-    renderFooter() {
-        let t = this;
-        const parent = document.getElementById(t.GUID).parentElement;
-        parent.getElementsByClassName('tbl_footer')[0].innerHTML = t.getFooter();
-        const btns = parent.getElementsByClassName('page-link');
-        for (const btn of btns) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                t.setPageIndex(parseInt(btn.innerHTML) - 1);
+                else if (colname === "edit") {
+                    td.classList.add('col-sel');
+                    const editBtn = document.createElement('a');
+                    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                    editBtn.setAttribute('href', 'javascript:void(0);');
+                    editBtn.addEventListener('click', () => {
+                        const modForm = new Form(self, row);
+                        wrapper.parentElement.replaceWith(modForm.getForm());
+                    });
+                    td.appendChild(editBtn);
+                }
+                else {
+                    const colnames = colname.split('.');
+                    if (colnames.length > 1) {
+                        const path = colnames[0].slice(1, -1);
+                        const sub = path.split('/').pop();
+                        const value = (sub === self.getTablename()) ? row[colnames[1]] : row[sub][colnames[1]];
+                        const rowID = (sub === self.getTablename()) ? row[self.getPrimaryColname()] : row[sub][optionCols[index].table.getPrimaryColname()];
+                        td.appendChild(self.renderGridElement(optionCols[index], rowID, value));
+                    }
+                }
+                tr.appendChild(td);
             });
-        }
-    }
-    renderHTML(DOM_ID) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const content = (yield this.getContent()) + this.getFooter();
-            const el = document.getElementById(DOM_ID);
-            if (el) {
-                el.innerHTML = content;
-                yield this.renderContent();
-                yield this.renderFooter();
-            }
+            tbody.appendChild(tr);
         });
+        return wrapper;
     }
-    get SelectionHasChanged() {
-        return this.onSelectionChanged.expose();
+    renderHTML(container = null) {
+        const self = this;
+        container = container || self.DOMContainer;
+        if (this.actRowCount === 0 && !this.ReadOnly) {
+            const createForm = new Form(self);
+            container.replaceWith(createForm.getForm());
+            createForm.focusFirst();
+            return;
+        }
+        const comp = document.createElement('div');
+        comp.classList.add('tablecontent');
+        comp.appendChild(self.getHeader());
+        comp.appendChild(self.getTable());
+        comp.appendChild(self.getFooter());
+        self.DOMContainer = comp;
+        container.replaceWith(comp);
     }
-    get EntriesHaveChanged() {
-        return this.onEntriesModified.expose();
+    reRenderRows() {
+        const self = this;
+        self.DOMContainer.getElementsByClassName('tbl_content')[0].replaceWith(self.getTable());
+        self.DOMContainer.getElementsByClassName('tbl_footer')[0].replaceWith(self.getFooter());
     }
 }
-class FormGenerator {
-    constructor(originTable, originRowID, rowData, GUID) {
-        this.editors = {};
-        this.GUID = GUID || DB.getID();
-        this.oTable = originTable;
-        this.oRowID = originRowID;
-        this.data = rowData;
+class Form {
+    constructor(Table, RowData = null, Path = null) {
+        this.showFooter = false;
+        this.oTable = Table;
+        this.oRowData = RowData;
+        this.formConf = Table.getFormCreate();
+        if (RowData) {
+            this.formConf = Table.getFormModify(RowData);
+            for (const key of Object.keys(RowData))
+                this.formConf[key].value = RowData[key];
+        }
+        if (!Path)
+            this.showFooter = true;
+        this._path = Path || Table.getPath();
     }
-    getElement(key, el) {
-        let result = '';
+    put(obj, path, val) {
+        path = (typeof path !== 'string') ? path : path.split('/');
+        path = path.map(p => !isNaN(p) ? parseInt(p) : p);
+        const length = path.length;
+        let current = obj;
+        let lastkey = null;
+        path.forEach((key, index) => {
+            if (index === length - 1) {
+                current[key] = val;
+            }
+            else {
+                if (!current[key]) {
+                    if (Number.isInteger(key) && key > 0) {
+                        const tmp = new Table(lastkey);
+                        const newObj = {};
+                        newObj[tmp.getPrimaryColname()] = key;
+                        current[0] = DB.mergeDeep(current[0], newObj);
+                        key = 0;
+                    }
+                    else
+                        current[key] = [{}];
+                }
+                current = current[key];
+                lastkey = key;
+            }
+        });
+    }
+    getNewFormElement(eltype, key, path) {
+        const Elem = document.createElement(eltype);
+        Elem.setAttribute('name', key);
+        Elem.setAttribute('id', 'inp_' + key);
+        Elem.setAttribute('data-path', path);
+        return Elem;
+    }
+    getInput(key, el) {
+        const self = this;
         let v = el.value || '';
+        if (el.value === 0)
+            v = 0;
+        if (!el.show_in_form && el.field_type != 'foreignkey')
+            return null;
         if (el.mode_form == 'hi')
-            return '';
-        const form_label = el.column_alias ? `<label class="col-sm-2 col-form-label" for="inp_${key}">${el.column_alias}</label>` : '';
+            return null;
+        if (el.mode_form == 'ro' && el.is_primary)
+            return null;
+        if (!this.oRowData && el.field_type === 'state')
+            return null;
+        let crElem = null;
+        const path = this._path + '/' + key;
         if (el.field_type == 'textarea') {
-            result += `<textarea name="${key}" id="inp_${key}" class="form-control${el.mode_form == 'rw' ? ' rwInput' : ''}" ${el.mode_form == 'ro' ? ' readonly' : ''}>${v}</textarea>`;
+            crElem = this.getNewFormElement('textarea', key, path);
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('readonly', 'readonly');
+            crElem.classList.add('form-control');
+            crElem.innerText = v;
         }
         else if (el.field_type == 'text') {
-            result += `<input name="${key}" type="text" id="inp_${key}" class="form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${escapeHtml(v)}"${el.mode_form == 'ro' ? ' readonly' : ''}/>`;
+            crElem = this.getNewFormElement('input', key, path);
+            crElem.setAttribute('type', 'text');
+            if (el.maxlength)
+                crElem.setAttribute('maxlength', el.maxlength);
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('readonly', 'readonly');
+            crElem.classList.add('form-control');
+            crElem.setAttribute('value', DB.escapeHtml(v));
         }
         else if (el.field_type == 'number') {
-            result += `<input name="${key}" type="number" id="inp_${key}" class="form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${v}"${el.mode_form == 'ro' ? ' readonly' : ''}/>`;
+            crElem = this.getNewFormElement('input', key, path);
+            crElem.setAttribute('type', 'number');
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('readonly', 'readonly');
+            crElem.classList.add('form-control');
+            crElem.setAttribute('value', v);
         }
         else if (el.field_type == 'float') {
             if (el.value)
-                el.value = parseFloat(el.value).toLocaleString('de-DE');
-            result += `<input name="${key}" type="text" id="inp_${key}" class="form-control inpFloat${el.mode_form == 'rw' ? ' rwInput' : ''}"
-      value="${v}"${el.mode_form == 'ro' ? ' readonly' : ''}/>`;
+                el.value = parseFloat(el.value).toLocaleString();
+            const inp = this.getNewFormElement('input', key, path);
+            inp.setAttribute('type', 'text');
+            inp.classList.add('inpFloat');
+            inp.classList.add('form-control', 'col-10');
+            if (el.mode_form === 'rw')
+                inp.classList.add('rwInput');
+            if (el.mode_form === 'ro') {
+                inp.setAttribute('readonly', 'readonly');
+                inp.classList.replace('form-control', 'form-control-plaintext');
+                v = Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            inp.classList.add('num-float');
+            inp.classList.add('text-right');
+            inp.setAttribute('value', v);
+            const div2 = document.createElement('div');
+            div2.classList.add('col-2', 'p-0');
+            div2.setAttribute('style', 'padding-top: 0.4em !important;');
+            div2.innerHTML = "&#8203;";
+            crElem = document.createElement('div');
+            crElem.classList.add('row');
+            crElem.appendChild(inp);
+            crElem.appendChild(div2);
         }
         else if (el.field_type == 'time') {
-            result += `<input name="${key}" type="time" id="inp_${key}" class="form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${v}"${el.mode_form == 'ro' ? ' readonly' : ''}/>`;
+            crElem = this.getNewFormElement('input', key, path);
+            crElem.setAttribute('type', 'time');
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('readonly', 'readonly');
+            crElem.classList.add('form-control');
+            crElem.setAttribute('value', v);
         }
         else if (el.field_type == 'date') {
-            result += `<input name="${key}" type="date" id="inp_${key}" class="form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${v}"${el.mode_form == 'ro' ? ' readonly' : ''}/>`;
+            crElem = this.getNewFormElement('input', key, path);
+            crElem.setAttribute('type', 'date');
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('readonly', 'readonly');
+            crElem.classList.add('form-control');
+            crElem.setAttribute('value', v);
         }
         else if (el.field_type == 'password') {
-            result += `<input name="${key}" type="password" id="inp_${key}" class="form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${v}"${el.mode_form == 'ro' ? ' readonly' : ''}/>`;
+            crElem = this.getNewFormElement('input', key, path);
+            crElem.setAttribute('type', 'password');
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('readonly', 'readonly');
+            crElem.classList.add('form-control');
+            crElem.setAttribute('value', v);
         }
         else if (el.field_type == 'datetime') {
-            result += `<div class="input-group">
-        <input name="${key}" type="date" id="inp_${key}" class="dtm form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${v.split(' ')[0]}"${el.mode_form == 'ro' ? ' readonly' : ''}/>
-        <input name="${key}" type="time" id="inp_${key}_time" class="dtm form-control${el.mode_form == 'rw' ? ' rwInput' : ''}"
-        value="${v.split(' ')[1]}"${el.mode_form == 'ro' ? ' readonly' : ''}/>
-      </div>`;
+            const iDate = this.getNewFormElement('input', key, path);
+            iDate.setAttribute('type', 'date');
+            iDate.classList.add('dtm', 'form-control');
+            iDate.setAttribute('value', v.split(' ')[0]);
+            if (el.mode_form === 'rw')
+                iDate.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                iDate.setAttribute('readonly', 'readonly');
+            const iTime = this.getNewFormElement('input', key, path);
+            iTime.setAttribute('id', 'inp_' + key + '_time');
+            iTime.setAttribute('type', 'time');
+            iTime.classList.add('dtm', 'form-control');
+            iTime.setAttribute('value', v.split(' ')[1]);
+            if (el.mode_form === 'rw')
+                iTime.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                iTime.setAttribute('readonly', 'readonly');
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('input-group');
+            wrapper.appendChild(iDate);
+            wrapper.appendChild(iTime);
+            crElem = wrapper;
         }
         else if (el.field_type == 'foreignkey') {
-            let ID = 0;
-            const x = el.value;
-            if (x) {
-                ID = x;
-                if (isObject(x)) {
-                    ID = x[Object.keys(x)[0]];
-                    const vals = recflattenObj(x);
-                    if (vals.join().replace(/,/g, '').length === 0)
-                        v = null;
-                    else {
-                        v = vals.join(' | ');
-                        v = v.length > 55 ? v.substring(0, 55) + "\u2026" : v;
-                    }
+            const wrapper = document.createElement('div');
+            const tblElement = document.createElement('div');
+            const hiddenInp = document.createElement('input');
+            hiddenInp.setAttribute('type', 'hidden');
+            hiddenInp.classList.add('rwInput');
+            hiddenInp.setAttribute('name', key);
+            hiddenInp.setAttribute('data-path', path);
+            wrapper.appendChild(tblElement);
+            wrapper.appendChild(hiddenInp);
+            let selType = parseInt(el.seltype);
+            if (!selType && selType !== 0)
+                selType = SelectType.Single;
+            const tmpTable = new Table(el.fk_table, selType);
+            tmpTable.ReadOnly = (el.mode_form == 'ro');
+            const fkIsSet = !Object.values(v).every(o => o === null);
+            if (fkIsSet) {
+                if (DB.isObject(v)) {
+                    const key = Object.keys(v)[0];
+                    tmpTable.setSelectedRows([v]);
+                    tmpTable.isExpanded = false;
+                    v = v[key];
+                    tmpTable.setFilter('{"=":["' + key + '",' + v + ']}');
                 }
             }
-            const getSelection = (cont, isReadOnly, custfilter) => {
-                if (custfilter) {
-                    const rd = this.data;
-                    const colnames = Object.keys(rd);
-                    for (const colname of colnames) {
-                        const pattern = '%' + colname + '%';
-                        if (custfilter.indexOf(pattern) >= 0) {
-                            const firstCol = Object.keys(rd[colname].value)[0];
-                            custfilter = custfilter.replace(new RegExp(pattern, "g"), rd[colname].value[firstCol]);
+            else
+                v = "";
+            hiddenInp.setAttribute('value', v);
+            if (el.show_in_form) {
+                if (el.customfilter) {
+                    if (self.oRowData) {
+                        for (const colname of Object.keys(self.oRowData)) {
+                            const pattern = '%' + colname + '%';
+                            if (el.customfilter.indexOf(pattern) >= 0) {
+                                const replaceWith = self.oRowData[colname];
+                                el.customfilter = el.customfilter.replace(new RegExp(pattern, "g"), replaceWith);
+                            }
+                        }
+                        if (el.revfk_col) {
+                            const fCreate = tmpTable.getFormCreateSettingsDiff();
+                            fCreate[el.revfk_col] = {};
+                            fCreate[el.revfk_col]['value'] = {};
+                            fCreate[el.revfk_col].value[el.revfk_col] = self.oRowData[el.revfk_col];
                         }
                     }
+                    el.customfilter = decodeURI(el.customfilter);
+                    tmpTable.setFilter(el.customfilter);
                 }
-                cont = cont.replace(/<[^>]*>?/gm, '');
-                if (isReadOnly)
-                    return `<span class="d-block text-muted" style="margin-top: .4rem;">${cont}</span>`;
-                else
-                    return `<a class="d-block text-decoration-none" style="margin-top:.4rem;"
-          onclick="loadFKTable(this, '${el.fk_table}', '${custfilter ? encodeURI(custfilter) : ''} ')"
-          href="javascript:void(0);">${cont}</a>`;
-            };
-            result += `<div><input type="hidden" name="${key}" value="${(ID && ID != 0) ? ID : ''}" class="inputFK${el.mode_form != 'hi' ? ' rwInput' : ''}">`;
-            console.log(v);
-            result += (v ? getSelection(v, (el.mode_form === 'ro'), el.customfilter) : getSelection('Nothing selected', (el.mode_form === 'ro'), el.customfilter));
-            result += `</div>`;
+                tmpTable.onSelectionChanged(selRows => {
+                    let value = "";
+                    if (selType === SelectType.Single)
+                        value = tmpTable.getSelectedIDs()[0];
+                    else if (selType === SelectType.Multi)
+                        value = JSON.stringify(tmpTable.getSelectedIDs());
+                    if (!value)
+                        value = "";
+                    hiddenInp.setAttribute('value', value);
+                });
+                tmpTable.loadRows(rows => {
+                    if (rows["count"] == 0) {
+                        const createForm = new Form(tmpTable);
+                        tblElement.replaceWith(createForm.getForm());
+                    }
+                    else {
+                        tmpTable.renderHTML(tblElement);
+                    }
+                });
+            }
+            else {
+                el.column_alias = null;
+            }
+            crElem = wrapper;
         }
         else if (el.field_type == 'reversefk') {
-            const tmpGUID = DB.getID();
-            const extTablename = el.revfk_tablename;
-            const extTableColSelf = el.revfk_colname1;
-            const extTableColExt = el.revfk_colname2;
-            const extTableColExtFilter = el.revfk_col2filter;
-            const hideCol = '`' + extTablename + '`.' + extTableColSelf;
-            const extTable = new Table(extTablename);
-            let custFormCreate = {};
-            const tablenameM = extTable.Columns[el.revfk_colname2].foreignKey.table;
-            extTable.ReadOnly = (el.mode_form == 'ro');
-            if (extTable.isRelationTable()) {
-                extTable.Columns[extTableColSelf].show_in_grid = false;
-                extTable.setColumnFilter(hideCol, this.oRowID.toString());
-                custFormCreate[extTableColSelf] = {};
-                custFormCreate[extTableColSelf]['value'] = this.oRowID;
-                custFormCreate[extTableColSelf]['mode_form'] = 'ro';
-                if (extTableColExtFilter) {
-                    custFormCreate[extTableColExt] = {};
-                    custFormCreate[extTableColExt]['customfilter'] = extTableColExtFilter;
-                }
-                extTable.setCustomFormCreateOptions(custFormCreate);
+            const isCreate = !this.oRowData;
+            const nmTable = new Table(el.revfk_tablename);
+            const hideCol = '`' + el.revfk_tablename + '`.' + el.revfk_colname1;
+            const mTablename = nmTable.Columns[el.revfk_colname2].foreignKey.table;
+            const mTable = new Table(mTablename, SelectType.Multi);
+            nmTable.ReadOnly = (el.mode_form == 'ro');
+            nmTable.setColumnFilter(hideCol, 'null');
+            if (!isCreate) {
+                const RowID = this.oRowData[this.oTable.getPrimaryColname()];
+                const myCol = nmTable.Columns[el.revfk_colname1].foreignKey.col_id;
+                const fCreate = nmTable.getFormCreateSettingsDiff();
+                fCreate[el.revfk_colname1] = { show_in_form: false };
+                fCreate[el.revfk_colname1]['value'] = {};
+                fCreate[el.revfk_colname1].value[myCol] = RowID;
+                nmTable.setColumnFilter(hideCol, RowID);
+                nmTable.resetLimit();
+                nmTable.Columns[el.revfk_colname1].show_in_grid = false;
+                nmTable.loadRows(r => {
+                    const allRels = nmTable.getRows();
+                    const connRels = allRels.filter(rel => rel.state_id == nmTable.getConfig().stateIdSel);
+                    const mObjs = allRels.map(row => row[el.revfk_colname2]);
+                    const mObjsSel = connRels.map(row => row[el.revfk_colname2]);
+                    const mFilter = '{"in":["' + mTable.getPrimaryColname() + '","' + mObjsSel.map(o => o[mTable.getPrimaryColname()]).join(',') + '"]}';
+                    mTable.setFilter(mFilter);
+                    mTable.setPath(this.oTable.getTablename() + '/' + RowID + '/' + mTable.getTablename() + '/0');
+                    mTable.options.showSearch = true;
+                    mTable.ReadOnly = nmTable.ReadOnly;
+                    mTable.setRows(mObjs);
+                    mTable.setSelectedRows(mObjsSel);
+                    mTable.renderHTML(crElem);
+                    mTable.onCreatedElement(resp => {
+                        const newForm = new Form(self.oTable, self.oRowData);
+                        self.formElement.replaceWith(newForm.getForm());
+                    });
+                    mTable.onSelectElement(row => {
+                        const mID = row[mTable.getPrimaryColname()];
+                        const data = { table: nmTable.getTablename(), row: {} };
+                        data.row[el.revfk_colname1] = RowID;
+                        data.row[el.revfk_colname2] = mID;
+                        DB.request('create', data, resp => {
+                            const newForm = new Form(self.oTable, self.oRowData);
+                            self.formElement.replaceWith(newForm.getForm());
+                        });
+                    });
+                    mTable.onUnselectElement(row => {
+                        const links = connRels.filter(rels => {
+                            if (rels[el.revfk_colname2][mTable.getPrimaryColname()] === row[mTable.getPrimaryColname()])
+                                return rels;
+                        });
+                        const primID = links[0][nmTable.getPrimaryColname()];
+                        const data = { table: nmTable.getTablename(), row: {} };
+                        data.row[nmTable.getPrimaryColname()] = primID;
+                        data.row['state_id'] = parseInt(nmTable.getConfig().stateIdSel) + 1;
+                        DB.request('makeTransition', data, resp => {
+                            const newForm = new Form(self.oTable, self.oRowData);
+                            self.formElement.replaceWith(newForm.getForm());
+                        });
+                    });
+                });
+                crElem = document.createElement('p');
+                crElem.innerText = gText[setLang].Loading;
             }
-            extTable.loadRows(rows => {
-                if (!extTable.ReadOnly && rows['count'] == 0) {
-                    document.getElementById(tmpGUID).innerHTML =
-                        `<a class="btn btn-default text-success" href="${location.hash + '/' + extTable.getTablename() + '/create/' + tablenameM}/create"><i class="fa fa-plus"></i> Create</a>`
-                            +
-                                `<span class="mx-3">or</span>` +
-                            `<a class="btn btn-default text-success" href="${location.hash + '/' + extTable.getTablename()}/create"><i class="fa fa-link"></i> Relate</a>`;
+            else {
+                if (!nmTable.ReadOnly) {
+                    const frm = new Form(mTable, null, this._path + '/' + mTablename + '/0');
+                    crElem = frm.getForm();
                 }
-                else if (extTable.ReadOnly && rows['count'] == 0) {
-                    document.getElementById(tmpGUID).innerHTML = '<p class="text-muted mt-2">No Entries</p>';
+                else {
                 }
-                else
-                    extTable.renderHTML(tmpGUID);
-            });
-            result += `<div id="${tmpGUID}"><p class="text-muted mt-2"><span class="spinner-grow spinner-grow-sm"></span> Loading Elements...</p></div>`;
+            }
         }
         else if (el.field_type == 'htmleditor') {
+            crElem = document.createElement('div');
+            crElem.classList.add('htmleditor');
             const newID = DB.getID();
-            this.editors[key] = { mode: el.mode_form, id: newID, editor: 'quill' };
-            result += `<div><div class="htmleditor" id="${newID}"></div></div>`;
-        }
-        else if (el.field_type == 'codeeditor') {
-            const newID = DB.getID();
-            this.editors[key] = { mode: el.mode_form, id: newID, editor: 'codemirror' };
-            result += `<textarea class="codeeditor" id="${newID}"></textarea>`;
+            const cont = this.getNewFormElement('div', key, path);
+            cont.setAttribute('id', newID);
+            cont.setAttribute('class', 'rwInput');
+            crElem.appendChild(cont);
+            const options = { theme: 'snow' };
+            if (el.mode_form == 'ro') {
+                options['readOnly'] = true;
+                options['modules'] = { toolbar: false };
+            }
+            setTimeout(() => {
+                const editor = new Quill('#' + newID, options);
+                editor.root.innerHTML = v || '<p></p>';
+            }, 10);
         }
         else if (el.field_type == 'rawhtml') {
-            result += '<div class="pt-2">' + el.value + '</div>';
+            crElem = document.createElement('div');
+            crElem.innerHTML = el.value;
+        }
+        else if (el.field_type == 'state') {
+            const self = this;
+            const SB = new StateButton(this.oRowData, key);
+            SB.setTable(this.oTable);
+            SB.setForm(self);
+            SB.setReadOnly(el.mode_form === 'ro');
+            SB.setOnSuccess(() => {
+                const pcol = self.oTable.getPrimaryColname();
+                const RowID = self.oRowData[pcol];
+                self.oTable.loadRow(RowID, row => {
+                    const newForm = new Form(self.oTable, row);
+                    self.formElement.replaceWith(newForm.getForm());
+                });
+            });
+            crElem = SB.getElement();
         }
         else if (el.field_type == 'enum') {
-            result += `<select name="${key}" class="custom-select${el.mode_form == 'rw' ? ' rwInput' : ''}" id="inp_${key}"${el.mode_form == 'ro' ? ' disabled' : ''}>`;
             const options = JSON.parse(el.col_options);
+            crElem = this.getNewFormElement('select', key, path);
+            if (el.maxlength)
+                crElem.setAttribute('maxlength', el.maxlength);
+            if (el.mode_form === 'rw')
+                crElem.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                crElem.setAttribute('disabled', 'disabled');
+            crElem.classList.add('custom-select');
             if (el.col_options)
                 for (const o of options) {
-                    result += `<option value="${o.value}"${el.value == o.value ? 'selected' : ''}>${o.name}</option>`;
+                    const opt = document.createElement('option');
+                    opt.setAttribute('value', o.value);
+                    opt.innerText = o.name;
+                    if (el.value == o.value)
+                        opt.setAttribute('selected', 'selected');
+                    crElem.appendChild(opt);
                 }
-            result += `</select>`;
         }
-        else if (el.field_type == 'switch') {
-            result = '';
-            result += `<div class="custom-control custom-switch mt-2">
-      <input name="${key}" type="checkbox" class="custom-control-input${el.mode_form == 'rw' ? ' rwInput' : ''}" id="inp_${key}"${el.mode_form == 'ro' ? ' disabled' : ''}${v == "1" ? ' checked' : ''}>
-      <label class="custom-control-label" for="inp_${key}">${el.column_alias}</label>
-    </div>`;
+        else if (el.field_type == 'switch' || el.field_type == 'checkbox') {
+            const checkEl = this.getNewFormElement('input', key, path);
+            checkEl.setAttribute('type', 'checkbox');
+            if (el.mode_form === 'rw')
+                checkEl.classList.add('rwInput');
+            if (el.mode_form === 'ro')
+                checkEl.setAttribute('disabled', 'disabled');
+            if (v == "1")
+                checkEl.setAttribute('checked', 'checked');
+            checkEl.classList.add('custom-control-input');
+            const labelEl = document.createElement('label');
+            labelEl.classList.add('custom-control-label');
+            labelEl.setAttribute('for', 'inp_' + key);
+            labelEl.innerText = el.label || '';
+            const wrapperEl = document.createElement('div');
+            wrapperEl.classList.add('custom-control', 'mt-2');
+            wrapperEl.classList.add('custom-' + el.field_type);
+            wrapperEl.appendChild(checkEl);
+            wrapperEl.appendChild(labelEl);
+            crElem = wrapperEl;
         }
-        else if (el.field_type == 'checkbox') {
-            result = '';
-            result += `<div class="custom-control custom-checkbox mt-2">
-        <input name="${key}" type="checkbox" class="custom-control-input${el.mode_form == 'rw' ? ' rwInput' : ''}" id="inp_${key}"${el.mode_form == 'ro' ? ' disabled' : ''}${v == "1" ? ' checked' : ''}>
-        <label class="custom-control-label" for="inp_${key}">${el.column_alias}</label>
-      </div>`;
+        const resWrapper = document.createElement('div');
+        resWrapper.setAttribute('class', el.customclass || 'col-12');
+        if (el.column_alias) {
+            const label = document.createElement('label');
+            label.setAttribute('for', 'inp_' + key);
+            label.innerText = el.column_alias;
+            resWrapper.appendChild(label);
         }
-        return `<div class="form-group row">${form_label}
-      <div class="col-sm-10 align-middle">
-        ${result}
-      </div>
-    </div>`;
+        if (crElem)
+            resWrapper.appendChild(crElem);
+        return resWrapper;
     }
-    getValues() {
-        let result = {};
-        const rwInputs = document.getElementById(this.GUID).getElementsByClassName('rwInput');
+    getFooter() {
+        const self = this;
+        const tblCreate = this.oTable;
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('col-12', 'my-4');
+        if (!self.oRowData) {
+            const createBtn = document.createElement('a');
+            createBtn.innerText = gText[setLang].Create;
+            createBtn.setAttribute('href', 'javascript:void(0);');
+            createBtn.classList.add('btn', 'btn-success', 'mr-1', 'mb-1');
+            wrapper.appendChild(createBtn);
+            createBtn.addEventListener('click', () => {
+                const data = self.getValues();
+                let newRowID = null;
+                tblCreate.importData(data, resp => {
+                    let importWasSuccessful = true;
+                    resp.forEach(answer => {
+                        let counter = 0;
+                        const messages = [];
+                        answer.forEach(msg => {
+                            if (msg.errormsg || msg.show_message)
+                                messages.push({ type: counter, text: msg.errormsg || msg.message });
+                            counter++;
+                        });
+                        messages.reverse();
+                        let btnTo = null;
+                        if (answer[0]['_entry-point-state']) {
+                            const targetStateID = answer[0]['_entry-point-state'].id;
+                            btnTo = new StateButton({ state_id: targetStateID });
+                            btnTo.setTable(tblCreate);
+                            btnTo.setReadOnly(true);
+                        }
+                        for (const msg of messages) {
+                            let title = '';
+                            if (msg.type == 0)
+                                title += gText[setLang].Create + (btnTo ? ' &rarr; ' + btnTo.getElement().outerHTML : '');
+                            document.getElementById('myModalTitle').innerHTML = title;
+                            document.getElementById('myModalContent').innerHTML = msg.text;
+                            $('#myModal').modal({});
+                        }
+                        if (answer.length != 2)
+                            importWasSuccessful = false;
+                        else
+                            newRowID = parseInt(answer[1]['element_id']);
+                    });
+                    if (importWasSuccessful) {
+                        self.oTable.loadRows(rows => {
+                            if (self.oTable.getSelectType() >= 1) {
+                                rows.records.map(row => {
+                                    if (row[self.oTable.getPrimaryColname()] === newRowID)
+                                        self.oTable.addSelectedRow(row);
+                                });
+                            }
+                            self.oTable.renderHTML(self.formElement);
+                        });
+                    }
+                });
+            });
+        }
+        else {
+            if (self.oTable.hasStateMachine()) {
+                const S = new StateButton(self.oRowData);
+                S.setTable(self.oTable);
+                S.setForm(self);
+                const nextStateBtns = S.getTransButtons();
+                S.setOnSuccess(() => {
+                    const RowID = self.oRowData[self.oTable.getPrimaryColname()];
+                    self.oTable.loadRow(RowID, row => {
+                        const F = new Form(self.oTable, row);
+                        self.formElement.replaceWith(F.getForm());
+                    });
+                });
+                wrapper.appendChild(nextStateBtns);
+            }
+            else {
+                const saveBtn = document.createElement('a');
+                saveBtn.innerText = gText[setLang].Save;
+                saveBtn.setAttribute('href', 'javascript:void(0);');
+                saveBtn.classList.add('btn', 'btn-primary', 'mr-1', 'mb-1');
+                wrapper.appendChild(saveBtn);
+                saveBtn.addEventListener('click', () => {
+                    const data = self.getValues(true);
+                    const newRowData = data[self.oTable.getTablename()][0];
+                    newRowData[self.oTable.getPrimaryColname()] = self.oRowData[self.oTable.getPrimaryColname()];
+                    self.oTable.updateRow(newRowData, () => {
+                        self.oTable.loadRows(() => {
+                            self.oTable.renderHTML(self.formElement);
+                        });
+                    });
+                });
+            }
+        }
+        if (this.oTable.getNrOfRows() > 0) {
+            const cancelBtn = document.createElement('a');
+            cancelBtn.innerText = gText[setLang].Cancel;
+            cancelBtn.setAttribute('href', 'javascript:void(0);');
+            cancelBtn.classList.add('btn', 'btn-light', 'mr-1', 'mb-1');
+            wrapper.appendChild(cancelBtn);
+            cancelBtn.addEventListener('click', () => {
+                self.oTable.loadRows(() => {
+                    self.oTable.renderHTML(self.formElement);
+                });
+            });
+        }
+        return wrapper;
+    }
+    focusFirst() {
+        const elem = this.formElement.querySelectorAll('.rwInput:not([type="hidden"]):not([disabled])')[0];
+        if (elem)
+            elem.focus();
+    }
+    getValues(onlyLastLayer = false) {
+        const result = {};
+        let res = {};
+        const rwInputs = this.formElement.getElementsByClassName('rwInput');
         for (const element of rwInputs) {
             const inp = element;
             const key = inp.getAttribute('name');
             const type = inp.getAttribute('type');
-            let value = undefined;
-            if (type == 'checkbox') {
-                value = inp.matches(':checked') ? 1 : 0;
+            let path = inp.getAttribute('data-path');
+            if (onlyLastLayer) {
+                const parts = path.split('/');
+                if (parts.length > 3)
+                    path = parts.slice(parts.length - 3).join('/');
             }
+            let value = undefined;
+            if (type == 'checkbox')
+                value = inp.matches(':checked') ? 1 : 0;
             else if (type == 'text' && inp.classList.contains('inpFloat')) {
                 const input = inp.value.replace(',', '.');
                 value = parseFloat(input);
@@ -1165,162 +1551,57 @@ class FormGenerator {
                 if (key in result)
                     value = result[key] + ' ' + inp.value;
             }
-            else if (type == 'hidden' && inp.classList.contains('inputFK')) {
-                let tmpVal = inp.value;
-                if (tmpVal == '')
-                    tmpVal = null;
-                value = tmpVal;
+            else if (type == 'hidden') {
+                let res = null;
+                if (inp.value != '')
+                    res = inp.value;
+                value = res;
             }
-            else {
+            else if (inp.classList.contains('ql-container'))
+                value = inp.getElementsByClassName('ql-editor')[0].innerHTML;
+            else
                 value = inp.value;
-            }
             if (!(value == '' && (type == 'number' || type == 'date' || type == 'time' || type == 'datetime')))
                 result[key] = value;
+            this.put(res, path, value);
         }
-        let editors = this.editors;
-        for (const key of Object.keys(editors)) {
-            const edi = editors[key];
-            if (edi['objQuill'])
-                result[key] = edi['objQuill'].root.innerHTML;
-            else if (edi['objCodemirror'])
-                result[key] = edi['objCodemirror'].getValue();
-        }
-        return result;
-    }
-    getHTML() {
-        let html = `<form id="${this.GUID}">`;
-        const data = this.data;
-        const sortedKeys = Object.keys(data).sort(function (x, y) {
-            const a = data[x].orderF ? parseInt(data[x].orderF) : 0;
-            const b = data[y].orderF ? parseInt(data[y].orderF) : 0;
-            return a < b ? -1 : (a > b ? 1 : 0);
-        });
-        for (const key of sortedKeys) {
-            html += this.getElement(key, data[key]);
-        }
-        return html + '</form>';
-    }
-    initEditors() {
-        let t = this;
-        let cnt = 0;
-        for (const key of Object.keys(t.editors)) {
-            const options = t.editors[key];
-            if (options.editor === 'quill') {
-                let QuillOptions = { theme: 'snow' };
-                if (options.mode == 'ro') {
-                    QuillOptions['readOnly'] = true;
-                    QuillOptions['modules'] = { toolbar: false };
-                }
-                t.editors[key]['objQuill'] = new Quill('#' + options.id, QuillOptions);
-                t.editors[key]['objQuill'].root.innerHTML = t.data[key].value || '<p></p>';
-                if (cnt === 0)
-                    t.editors[key]['objQuill'].focus();
-            }
-            else if (options.editor === 'codemirror') {
-                const editor = CodeMirror.fromTextArea(document.getElementById(options.id), {
-                    lineNumbers: true,
-                    fixedGutter: true
-                });
-                editor.setValue(t.data[key].value || '');
-                t.editors[key]['objCodemirror'] = editor;
-            }
-            cnt++;
-        }
-        let elements = document.querySelectorAll('input[type=number]');
-        for (let el of elements) {
-            el.addEventListener('keydown', function (e) {
-                const kc = e.keyCode;
-                if ([46, 8, 9, 27, 13, 109, 110, 173, 190, 188].indexOf(kc) !== -1 ||
-                    (kc === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
-                    (kc === 67 && e.ctrlKey === true) ||
-                    (kc === 86 && e.ctrlKey === true) ||
-                    (kc >= 35 && kc <= 40))
-                    return;
-                if ((e.shiftKey || (kc < 48 || kc > 57)) && (kc < 96 || kc > 105)) {
-                    e.preventDefault();
-                }
-            });
-        }
-        elements = document.querySelectorAll('.rwInput:not(textarea)');
-        for (let el of elements) {
-            el.addEventListener('keydown', function (e) {
-                if (e.which == 13)
-                    e.preventDefault();
-            });
-        }
-    }
-    refreshEditors() {
-        let editors = this.editors;
-        for (const key of Object.keys(editors)) {
-            const edi = editors[key];
-            if (edi['objCodemirror'])
-                edi['objCodemirror'].refresh();
-        }
-    }
-}
-function escapeHtml(string) {
-    const entityMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' };
-    return String(string).replace(/[&<>"'`=\/]/g, function (s) {
-        return entityMap[s];
-    });
-}
-function isObject(item) {
-    return (item && typeof item === 'object' && !Array.isArray(item));
-}
-function mergeDeep(target, ...sources) {
-    if (!sources.length)
-        return target;
-    const source = sources.shift();
-    if (isObject(target) && isObject(source)) {
-        for (const key in source) {
-            if (isObject(source[key])) {
-                if (!target[key]) {
-                    Object.assign(target, { [key]: {} });
-                }
-                else {
-                    target[key] = Object.assign({}, target[key]);
-                }
-                mergeDeep(target[key], source[key]);
-            }
-            else {
-                Object.assign(target, { [key]: source[key] });
-            }
-        }
-    }
-    return mergeDeep(target, ...sources);
-}
-function recflattenObj(x) {
-    if (isObject(x)) {
-        let res = Object.keys(x).map(e => { return isObject(x[e]) ? recflattenObj(x[e]) : x[e]; });
         return res;
     }
-}
-function loadFKTable(element, tablename, customfilter) {
-    const hiddenInput = element.parentNode.getElementsByClassName('inputFK')[0];
-    hiddenInput.value = null;
-    const randID = DB.getID();
-    element.outerHTML = '<p id="' + randID + '">Loading...</p>';
-    try {
-        const tmpTable = new Table(tablename, SelectType.Single);
-        if (customfilter)
-            tmpTable.setFilter(decodeURI(customfilter));
-        tmpTable.loadRows(rows => {
-            if (rows["count"] == 0) {
-                document.getElementById(randID).outerHTML = `<p class="text-muted" style="margin-top:.4rem;">
-          <span class="mr-3">No Entries found</span>
-          <a class="btn btn-sm btn-success" href="${location.hash + '/' + tmpTable.getTablename() + '/create'}">Create</a></p>`;
-            }
-            else {
-                tmpTable.renderHTML(randID);
-            }
-        });
-        tmpTable.SelectionHasChanged.on(function () {
-            const selRowID = tmpTable.getSelectedRowID();
-            hiddenInput.value = '' || selRowID;
-        });
+    setNewOriginTable(newTable) {
+        this.oTable = newTable;
     }
-    catch (e) {
-        element.innerHTML = '<p class="text-muted mt-2">No Access to this Table!</p>';
-        return;
+    getForm() {
+        const self = this;
+        const sortedKeys = Object.keys(self.formConf).sort((x, y) => Math.sign(parseInt(self.formConf[x].orderF || 0) - parseInt(self.formConf[y].orderF || 0)));
+        const frm = document.createElement('form');
+        frm.classList.add('formcontent', 'row');
+        if (!self.oRowData)
+            frm.classList.add('frm-create');
+        const cols = [];
+        sortedKeys.map(key => {
+            const actCol = self.formConf[key].col || 0;
+            const inp = self.getInput(key, self.formConf[key]);
+            if (inp) {
+                if (actCol > 0) {
+                    if (!cols[actCol]) {
+                        const c = document.createElement('div');
+                        c.classList.add('col');
+                        const row = document.createElement('div');
+                        row.classList.add('row');
+                        c.appendChild(row);
+                        cols[actCol] = c;
+                        frm.appendChild(c);
+                    }
+                    cols[actCol].firstChild.appendChild(inp);
+                }
+                else {
+                    frm.appendChild(inp);
+                }
+            }
+        });
+        this.formElement = frm;
+        if (self.showFooter)
+            frm.appendChild(self.getFooter());
+        return frm;
     }
 }

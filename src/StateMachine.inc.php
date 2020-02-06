@@ -217,7 +217,7 @@
     } 
     public function getFormDataByStateID($stateID) {
       if (!($this->ID > 0)) return "";
-      $fname = $this->projectDir."/_state/$stateID/form.json";
+      $fname = $this->projectDir."/_state/$stateID.json";
       return file_exists($fname) ? file_get_contents($fname) : null;
     }
     public function getCreateFormByTablename() {
@@ -245,11 +245,18 @@
     }
     public function getLinks() {
       $result = array();
-      $stmt = $this->db->prepare("SELECT state_id_FROM AS 'from', state_id_TO AS 'to' FROM state_rules WHERE
-        state_id_FROM AND state_id_TO IN (SELECT state_id FROM state WHERE statemachine_id = ?) ORDER BY state_id_TO");
-      $stmt->execute(array($this->ID));
+      $stmt = $this->db->prepare("(SELECT state_id_FROM AS 'from', state_id_TO AS 'to', state_rules_id AS 'trans_id'
+      FROM state_rules WHERE (state_id_FROM != state_id_TO) AND state_id_FROM AND state_id_TO IN
+      (SELECT state_id FROM state WHERE statemachine_id = ?) ORDER BY state_id_FROM, state_id_TO)
+      UNION
+      (SELECT state_id_FROM, state_id_TO, state_rules_id
+      FROM state_rules WHERE (state_id_FROM = state_id_TO) AND state_id_FROM AND state_id_TO IN
+      (SELECT state_id FROM state WHERE statemachine_id = ?) ORDER BY state_id_FROM
+      )");
+      $stmt->execute([$this->ID, $this->ID]);
       while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $result[] = [
+          'transID' => (int)$row['trans_id'],
           'from' => (int)$row['from'],
           'to' => (int)$row['to']
         ];
@@ -402,7 +409,7 @@
       return $stmt->execute(array($script, $stateID)); // Returns True/False
     }
     public function setFormDataByStateID($stateID, $formData) {
-      $fname = $this->projectDir."/_state/$stateID/form.json";
+      $fname = $this->projectDir."/_state/$stateID.json";
       file_put_contents($fname, $formData);
     }
   }

@@ -1,6 +1,6 @@
 <?php
-    // APMS Generated Project (2019-11-12 16:11:26)
-    // Version: https://github.com/BPMspaceUG/APMS2/tree/446cc441e6c8d38ca3b4ccdd585fcc89f1cb6dfd
+    // APMS Generated Project (2020-02-06 10:47:35)
+    // Version: https://github.com/BPMspaceUG/APMS2/tree/
     // ==================================================
     //-- Database
     define('DB_USER', '');
@@ -8,5 +8,9 @@
     define('DB_HOST', '');
     define('DB_NAME', '');
     //-- Authentication + API
-    define('API_URL_LIAM', ''); // URL from Authentication-Service -> returns a JWT-Token
-    define('AUTH_KEY', ''); // Shared AuthKey which has to be known by the Authentication-Service
+    define('API_URL_LIAM', ''); // Authentication-Service
+    define('AUTH_KEY', ''); // Secret of Auth-Service
+    define('TOKEN_EXP_TIME', 3600); // Expiry Time of an Access-Token [sec]
+    define('URL_CHANGEPW', ''); // Link to change the Password
+    define('URL_MANAGEPROFILE', ''); // Link to manage the Profile
+    

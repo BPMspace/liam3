@@ -15,6 +15,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": false,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -24,6 +25,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "text"
@@ -33,6 +35,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "hi",
                 "field_type": "state"
@@ -56,6 +59,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -65,6 +69,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "datetime"
@@ -74,6 +79,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "textarea"
@@ -83,6 +89,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 4,
                 "mode_form": "hi",
                 "field_type": "state"
@@ -106,6 +113,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -115,6 +123,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "text"
@@ -124,6 +133,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "text"
@@ -133,6 +143,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": false,
+                "show_in_form": true,
                 "col_order": 4,
                 "mode_form": "rw",
                 "field_type": "password"
@@ -142,6 +153,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": false,
+                "show_in_form": true,
                 "col_order": 5,
                 "mode_form": "hi",
                 "field_type": "textarea"
@@ -151,6 +163,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 6,
                 "mode_form": "hi",
                 "field_type": "state"
@@ -169,8 +182,7 @@
                 "revfk_colname2": "liam3_email_id_fk_396224"
             }
         },
-        "table_icon": "\u003Ci class=\u0022fa fa-user\u0022\u003E\u003C\/i\u003E",
-        "showKids": false
+        "table_icon": "\u003Ci class=\u0022fa fa-user\u0022\u003E\u003C\/i\u003E"
     },
     "liam3_user_email": {
         "table_alias": "User-Email",
@@ -188,6 +200,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -197,6 +210,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -211,6 +225,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -225,13 +240,13 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 4,
                 "mode_form": "hi",
                 "field_type": "state"
             }
         },
-        "table_icon": "",
-        "showKids": false
+        "table_icon": ""
     },
     "liam3_user_loginattempt": {
         "table_alias": "User-Loginattempt",
@@ -249,6 +264,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -258,6 +274,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -272,6 +289,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -286,6 +304,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 4,
                 "mode_form": "hi",
                 "field_type": "state"
@@ -309,6 +328,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -318,6 +338,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "text"
@@ -327,6 +348,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "textarea"
@@ -350,6 +372,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -359,6 +382,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -373,12 +397,19 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
-                "field_type": "number"
+                "field_type": "foreignkey",
+                "foreignKey": {
+                    "table": "liam3_user",
+                    "col_id": "liam3_User_id",
+                    "col_subst": "*"
+                }
             }
         },
-        "table_icon": "\u003Ci class=\u0022fa fa-square\u0022\u003E\u003C\/i\u003E"
+        "table_icon": "\u003Ci class=\u0022fa fa-square\u0022\u003E\u003C\/i\u003E",
+        "showKids": false
     },
     "state_machines": {
         "table_alias": "Machines",
@@ -396,6 +427,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -405,6 +437,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "text"
@@ -414,6 +447,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "textarea"
@@ -437,6 +471,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -446,6 +481,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "text"
@@ -455,6 +491,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "switch"
@@ -464,6 +501,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 4,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -478,6 +516,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 5,
                 "mode_form": "rw",
                 "field_type": "textarea"
@@ -487,6 +526,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 6,
                 "mode_form": "rw",
                 "field_type": "textarea"
@@ -510,6 +550,7 @@
                 "is_primary": true,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 1,
                 "mode_form": "hi",
                 "field_type": "number"
@@ -519,6 +560,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 2,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -533,6 +575,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 3,
                 "mode_form": "rw",
                 "field_type": "foreignkey",
@@ -547,6 +590,7 @@
                 "is_primary": false,
                 "is_virtual": false,
                 "show_in_grid": true,
+                "show_in_form": true,
                 "col_order": 4,
                 "mode_form": "rw",
                 "field_type": "textarea"
