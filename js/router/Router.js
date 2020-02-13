@@ -29,6 +29,7 @@ export default class Router {
 			}
 		}
 		// ===> Output HTML
-		this.renderNode.innerHTML = route ? route.renderView() : document.location.assign('#/dashboard');
+        //this.renderNode.innerHTML = route ? route.renderView() : document.location.assign('#/dashboard');
+		this.renderNode.innerHTML = route ? route.renderView() : document.location.assign('#/liam3_loginattempts');
 	}
 }
