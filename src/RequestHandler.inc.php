@@ -224,6 +224,15 @@
     private $token = null;
     private static $writeOnlyColNames = [];
 
+    const EMAIL_STATE_NOT_VERIFIED = 1;
+    const EMAIL_STATE_VERIFIED = 2;
+    const EMAIL_STATE_DELETED = 4;
+    const USER_STATE_INCOMPLETE = 9;
+    const USER_STATE_COMPLETE = 10;
+    const USER_STATE_UPDATE = 11;
+    const USER_EMAIL_STATE_USE = 13;
+    const USER_EMAIL_STATE_UNSELECTED = 14;
+
     public function __construct($tokendata = null) {
       $this->token = $tokendata;
     }
@@ -437,6 +446,7 @@
       return json_encode($res);
     }
     public function read($param) {
+        $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
       //--------------------- Check Params
       $validParams = ['table', 'limit', 'sort', 'filter', 'search', 'view'];
       $hasValidParams = $this->validateParamStruct($validParams, $param);
@@ -863,6 +873,888 @@
     public function ping(){
       return json_encode(['pong']);
     }
+      public function login($param)
+      {
+          /*define('EMAIL_STATE_VERIFIED', 2);
+          define('USER_STATE_COMPLETE', 10);
+          define('USER_EMAIL_STATE_USE', 13);*/
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $email = $param["email"];
+                      $password = $param["password"];
+
+                      // only valid for Liam3
+                      $tMail = json_decode(api(["cmd" => "read", "param" => ["table" => "liam3_email", "filter" => '{"=":["liam3_email_text","' . $email . '"]}']]), true);
+                      if (count($tMail["records"]) == 1) {
+                          // Mail OK
+                          $tMail = $tMail["records"];
+                          //Check Email State
+                          if ($tMail[0]['state_id'] == self::EMAIL_STATE_VERIFIED) {
+                              $email_id = $tMail[0]['liam3_email_id'];
+                          } else {
+                              $error = 'Email is not verified';
+                              /*
+                              TODO: Login Attempts function
+                              $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                              $result = api(json_encode(array(
+                                      "cmd" => "create",
+                                      "param" => array(
+                                          "table" => "liam3_LoginAttempts",
+                                          "row" => array(
+                                              "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                              "liam3_LoginAttempts_info" => $login_attempt_info
+                                          )
+                                      )
+                                  )
+                              ));*/
+                              die(fmtError($error));
+                          }
+                          //Check if email is connected with a user
+                          $email_user = json_decode(api(["cmd" => "read", "param" => ["table" => "liam3_user_email", "filter" => '{"=":["liam3_email_text","' . $email . '"]}']]), true);
+                          if ($email_user && ($email_user['records'][0]['state_id'] == self::USER_EMAIL_STATE_USE)) {
+                              $user_id = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+                          } else {
+                              $error = 'This email is unselected.';
+                              die(fmtError($error));
+                              $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                          }
+                          //Check the user state
+                          if (($email_user['records'][0]['liam3_User_id_fk_164887']['state_id'] != self::USER_STATE_COMPLETE)) {
+                              $error = 'The state of this user is not complete';
+                              die(fmtError($error));
+                              $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                          }
+                          //Check if password is correct.
+                          $salt = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_salt'];
+                          $hashedPassword = hash('sha512', $password . $salt);
+                          if ($hashedPassword != $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_password']) {
+                              $error = 'Wrong password.';
+                              die(fmtError($error));
+                              $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                              /*
+                              api(json_encode(array(
+                                      "cmd" => "create",
+                                      "param" => array(
+                                          "table" => "liam3_LoginAttempts",
+                                          "row" => array(
+                                              "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                              "liam3_LoginAttempts_info" => $login_attempt_info
+                                          )
+                                      )
+                                  )
+                              ));
+                              */
+                          }
+
+                          // TODO: Create Token for Serices (LIAM, SQMS, COMS)
+
+                          // Generate User-Token
+                          $token_data = array();
+                          $token_data['iss'] = "liam3";
+                          $token_data['iat'] = time();
+                          $token_data['permissions'] = ["everything"];
+                          $token_data['uid'] = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+                          $token = JWT::encode($token_data, AUTH_KEY);
+
+                          $result = [
+                              "login_valid" => true,
+                              "token" => $token
+                          ];
+
+                          return json_encode($result, true);
+
+
+                      } else
+                          die(fmtError('Mail does not exist!'));
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function selfRegister($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $liam3_url = $param["liam3_url"];
+                      $email = $param["email"];
+                      $origin = $param["origin"];
+                      $firstname = $param["firstname"];
+                      $lastname = $param["lastname"];
+                      $email_id = $param["email_id"];
+
+                      if ($email_id) {
+                          $result = [1, 2];
+                      } else {
+                          $result = json_decode(api(array(
+                              "cmd" => "create",
+                              "param" => array(
+                                  "table" => "liam3_email",
+                                  "row" => array(
+                                      "liam3_email_text" => $email,
+                                      "dont_send_email" => true
+                                  )
+                              )
+                          )), true);
+                      }
+                      if (count($result) > 1) {
+                          if ($email_id) {
+                              $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
+                                  "filter" => '{"and":[{"=":[ "liam3_email_id" ,' . $email_id . ']},{"!=":[ "state_id",' . self::EMAIL_STATE_NOT_VERIFIED . ']}]}'))), true);
+                              if (!$check_email) die(fmtError('This email is already verified or blocked.'));
+                          }
+                          if (!$email_id) $email_id = $result[1]['element_id'];
+                          $jwt_key = AUTH_KEY;
+                          $jwt_token = array(
+                              "iss" => "liam3",
+                              "aud" => $email,
+                              "iat" => time(),
+                              "exp" => time() + 10800
+                          );
+
+                          /**
+                           * IMPORTANT:
+                           * You must specify supported algorithms for your application. See
+                           * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                           * for a list of spec-compliant algorithms.
+                           */
+                          $jwt = JWT::encode($jwt_token, $jwt_key);
+
+                          // Mail Content
+                          $subject = "Please confirm your Mail Adress";
+                          $user_info = '&firstname=' . $firstname . '&lastname=' . $lastname;
+                          $link = $liam3_url . "/liam3_Client_register.php?token=" . $jwt . "&origin=" . $origin . $user_info;
+                          $msg = "Hello, First line of text \n Second line of text <a href='$link'>Click here to confirm your email</a>";
+                          $msg = str_replace('$link', $link, $msg);
+                          // Format and Send Mail
+                          $msg = wordwrap($msg, 70);
+                          if (!mail($email, $subject, $msg)) {
+                              die(fmtError($result[0]['The email can\'t be send.']));
+                          }
+                          $result = [
+                              "email_id" => $email_id,
+                              "message" => 'A verification link has been sent to your email address.'
+                          ];
+                          return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function register($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $email = $param["email"];
+                      if (isset($param["check_email"])) {
+                          $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
+                              "filter" => '{"and":[{"=":[ "liam3_email_text" ,"' . $email . '"]},{"!=":[ "state_id",' . self::EMAIL_STATE_NOT_VERIFIED . ']}]}'))), true);
+                          if ($check_email['count']) {
+                              die(fmtError('This email is already verified or blocked.'));
+                          } else {
+                              return true;
+                          }
+                      } else {
+                          $check_email = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_email",
+                              "filter" => '{"=":["liam3_email_text", "'.$email.'"]}'))), true);
+                          $email_id = $check_email['records'][0]['liam3_email_id'];
+                          $password = $param["password"];
+                          $firstname = $param["firstname"];
+                          $lastname = $param["lastname"];
+                          $result = api(array(
+                              "cmd" => "create",
+                              "param" => array(
+                                  "table" => "liam3_user",
+                                  "row" => array(
+                                      "liam3_User_firstname" => $firstname,
+                                      "liam3_User_lastname" => $lastname,
+                                      "liam3_User_password" => $password,
+                                      "liam3_User_email_id" => $email_id
+                                  )
+                              )
+                          ));
+                          try {
+                              $result = json_decode($result, true);
+                          } catch (Exception $e) {
+                              die(fmtError($e->getMessage()));
+                          }
+                          if (count($result) > 1) {
+                              $user_id = $result[1]['element_id'];
+                              $result = api(array(
+                                  "cmd" => "makeTransition",
+                                  "param" => array(
+                                      "table" => "liam3_email",
+                                      "row" => array(
+                                          "liam3_email_id" => $email_id,
+                                          "state_id" => self::EMAIL_STATE_VERIFIED
+                                      )
+                                  )
+                              ));
+                              try {
+                                  $result = json_decode($result, true);
+                              } catch (Exception $e) {
+                                  die(fmtError($e->getMessage()));
+                              }
+                              if ($result && count($result) > 2) {
+                                  $result = api(array(
+                                      "cmd" => "create",
+                                      "param" => array(
+                                          "table" => "liam3_user_email",
+                                          "row" => [
+                                              "liam3_User_id_fk_164887" => $user_id,
+                                              "liam3_email_id_fk_396224" => $email_id]
+                                      )
+                                  ));
+                                  try {
+                                      $result = json_decode($result, true);
+                                  } catch (Exception $e) {
+                                      die(fmtError($e->getMessage()));
+                                  }
+                                  $result = api(array(
+                                      "cmd" => "makeTransition",
+                                      "param" => array(
+                                          "table" => "liam3_user",
+                                          "row" => array(
+                                              "liam3_User_id" => $user_id,
+                                              "state_id" => self::USER_STATE_COMPLETE
+                                          )
+                                      )
+                                  ));
+                                  try {
+                                      $result = json_decode($result, true);
+                                  } catch (Exception $e) {
+                                      die(fmtError($e->getMessage()));
+                                  }
+                                  if (isset($_GET['origin']) && $_GET['origin']) {
+                                      header('Location: http:' . $_GET['origin']);
+                                      exit();
+                                  }
+                                  $result = [
+                                      "showForm" => true
+                                  ];
+                                  return json_encode($result, true);
+                              } else {
+                                  die(fmtError('This email is already verified or blocked.'));
+                              }
+                          } else {
+                              $result = [
+                                  "showForm" => true,
+                                  "message" => $result[0]['message']
+                              ];
+                              return json_encode($result, true);
+                          }
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function forgotPassword($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $liam3_url = $param["liam3_url"];
+                      $email_input = $param["email"];
+                      $user_email = json_decode(api(array(
+                          "cmd" => "read",
+                          "param" => array(
+                              "table" => "liam3_user_email",
+                              "filter" => '{"and":[{"=":["liam3_email_text","' . $email_input . '"]},{"=":["liam3_user_email.state_id",' . self::USER_EMAIL_STATE_USE . ']}]}'
+                          )
+                      )), true);
+                      $user_email = $user_email['records'];
+                      if (!$user_email) {
+                          die(fmtError('There is no registered user with this email address'));
+                      } else {
+                          $result = json_decode(api(array(
+                              "cmd" => "read",
+                              "param" => array(
+                                  "table" => "liam3_email",
+                                  "filter" => '{"and":[{"=":[ "liam3_email_text" ,"' . $email_input . '"]},{"=":[ "state_id",' . self::EMAIL_STATE_VERIFIED . ']}]}'
+                              )
+                          )), true);
+                          if (!$result) {
+                              die(fmtError('This email address is not verified'));
+                          }
+                      }
+                      $jwt_key = AUTH_KEY;
+                      $jwt_token = array(
+                          "iss" => "liam3",
+                          "aud" => $user_email[0]['liam3_User_id_fk_164887']['liam3_User_id'],
+                          "iat" => time(),
+                          "exp" => time() + 10800
+                      );
+
+                      /**
+                       * IMPORTANT:
+                       * You must specify supported algorithms for your application. See
+                       * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                       * for a list of spec-compliant algorithms.
+                       */
+                      $jwt = JWT::encode($jwt_token, $jwt_key);
+
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_user",
+                              "row" => array(
+                                  "liam3_User_id" => $user_email[0]['liam3_User_id_fk_164887']['liam3_User_id'],
+                                  "liam3_client_passwd_reset" => true,
+                                  "liam3_User_email" => $email_input,
+                                  "state_id" => self::USER_STATE_UPDATE
+                              )
+                          )
+                      ));
+                      $result = json_decode($result, true);
+                      if ($result > 2) {
+                          // Mail Content
+                          $subject = "Password Reset";
+                          $link = $liam3_url . "/liam3_Client_reset_password.php?token=" . $jwt;
+                          $msg = "<a href='$link'>Click here to reset your password</a>";
+                          $msg = str_replace('$link', $link, $msg);
+                          // Format and Send Mail
+                          $msg = wordwrap($msg, 70);
+                          if (!mail($email_input, $subject, $msg)) {
+                              die(fmtError($result[0]['The email can\'t be send.']));
+                          }
+                          $result = [
+                              "message" => 'Password reset link is sent to this e-mail address.'
+                          ];
+                          return json_encode($result, true);
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function resetPassword($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $user_id = $param["user_id"];
+                      $password_new = $param["password_new"];
+                      $password_new_confirm = $param["password_new_confirm"];
+                      $result = json_decode(api(array(
+                          "cmd" => "read",
+                          "param" => array(
+                              "table" => "liam3_user",
+                              "filter" => '{"and":[{"=":["liam3_User_id","' . $user_id . '"]},{"=":["state_id",' . self::USER_STATE_COMPLETE . ']}]}'
+                          )
+                      )), true);
+                      if ($result['records']) {
+                          die(fmtError('This link was already used. If you need to reset your passwort again, please click on the button "Forgot passwort" in the LogIn form.'));
+                      }
+                      if ($password_new) {
+                          $result = api(array(
+                              "cmd" => "makeTransition",
+                              "param" => array(
+                                  "table" => "liam3_user",
+                                  "row" => array(
+                                      "liam3_User_id" => $user_id,
+                                      "liam3_User_password_new" => $password_new,
+                                      "liam3_User_password_new_confirm" => $password_new_confirm,
+                                      "liam3_client_passwd_reset_form" => true,
+                                      "state_id" => self::USER_STATE_COMPLETE
+                                  )
+                              )
+                          ));
+                          $result = json_decode($result, true);
+                          if (count($result) > 2) {
+                              $result = [
+                                  "message" => $result[1]['message']
+                              ];
+                              return json_encode($result, true);
+                          } else {
+                              die(fmtError($result[1]['message']));
+                          }
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function addAnotherEmail($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("everything", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $liam3_url = $param["liam3_url"];
+                      $user_id = $param["user_id"];
+                      $email = $param["email"];
+                      $result = api(array(
+                          "cmd" => "create",
+                          "param" => array(
+                              "table" => "liam3_email",
+                              "row" => array(
+                                  "liam3_email_text" => $email,
+                                  "only_verify_mail" => true,
+                                  "dont_send_email" => true
+                              )
+                          )
+                      ));
+                      $result = json_decode($result, true);
+                      if (count($result) > 1) {
+                          $email_id = $result[1]['element_id'];
+                          $jwt_key = AUTH_KEY;
+                          $jwt_token = array(
+                              "iss" => "liam3",
+                              "aud" => $email,
+                              "iat" => time(),
+                              "exp" => time() + 10800
+                          );
+
+                          /**
+                           * IMPORTANT:
+                           * You must specify supported algorithms for your application. See
+                           * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                           * for a list of spec-compliant algorithms.
+                           */
+                          $jwt = JWT::encode($jwt_token, $jwt_key);
+                          $subject = "Verification";
+                          $link = $liam3_url . "/liam3_Client_verify.php?token=" . $jwt;
+                          $msg = "Please verify your mail - <a href='$link'>Click here to verify your email</a>";
+                          $msg = str_replace('$link', $link, $msg);
+                          // Format and Send Mail
+                          $msg = wordwrap($msg, 70);
+                          if (!mail($email, $subject, $msg)) {
+                              die(fmtError($result[0]['The email can\'t be send.']));
+                          }
+                          $success = 'A verification link has been sent to your email address.';
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                      if (isset($success)) {
+                          $email_id = $result[1]["element_id"];
+                          $result = api(array(
+                              "cmd" => "create",
+                              "param" => array(
+                                  "table" => "liam3_user_email",
+                                  "row" => [
+                                      "liam3_User_id_fk_164887" => $user_id,
+                                      "liam3_email_id_fk_396224" => $email_id
+                                  ]
+                              )
+                          ));
+                          $result = [
+                              "message" => $success
+                          ];
+                          return json_encode($result, true);
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function verifyEmail($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("everything", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $liam3_url = $param["liam3_url"];
+                      $email_id = $param["email_id"];
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_email",
+                              "row" => [
+                                  "liam3_email_id" => $email_id,
+                                  "only_verify_mail" => true,
+                                  "state_id" => self::EMAIL_STATE_NOT_VERIFIED
+                              ]
+                          )
+                      ));
+                      $result = json_decode($result, true);
+                      if (count($result) > 2) {
+                          $result2 = api(array(
+                              "cmd" => "read",
+                              "param" => array(
+                                  "table" => "liam3_email",
+                                  "filter" => '{"=":["liam3_email_id", '.$email_id.']}'
+                              )
+                          ));
+                          $result2 = json_decode($result2, true);
+                          $result2 = $result2['records'];
+                          $email = $result2[0]['liam3_email_text'];
+                          $jwt_key = AUTH_KEY;
+                          $jwt_token = array(
+                              "iss" => "liam3",
+                              "aud" => $email,
+                              "iat" => time(),
+                              "exp" => time() + 10800
+                          );
+
+                          /**
+                           * IMPORTANT:
+                           * You must specify supported algorithms for your application. See
+                           * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+                           * for a list of spec-compliant algorithms.
+                           */
+                          $jwt = JWT::encode($jwt_token, $jwt_key);
+
+                          $subject = "Verification";
+                          $link = $liam3_url . "/liam3_Client_verify.php?token=" . $jwt;
+                          $msg = "Please verify your mail - <a href='$link'>Click here to verify your email</a>";
+                          $msg = str_replace('$link', $link, $msg);
+                          // Format and Send Mail
+                          $msg = wordwrap($msg, 70);
+                          if (!mail($email, $subject, $msg)) {
+                              die(fmtError($result[0]['The email can\'t be send.']));
+                          }
+                          $success = 'A verification link has been sent to your email address.';
+                          $result = [
+                              "message" => $success
+                          ];
+                          return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function setEmailToVerified($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("login", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $email = $param["email"];
+                      $result = api(array(
+                          "cmd" => "read",
+                          "param" => array(
+                              "table" => "liam3_email",
+                              "filter" => '{"=":["liam3_email_text","'.$email.'"]}'
+                          )
+                      ));
+                      $result = json_decode($result, true);
+                      if (!$result['records']) {
+                          die(fmtError('Email not found.'));
+                      } else {
+                          $email_id = $result['records'][0]['liam3_email_id'];
+                          $result = api(array(
+                              "cmd" => "makeTransition",
+                              "param" => array(
+                                  "table" => "liam3_email",
+                                  "row" => array(
+                                      "liam3_email_id" => $email_id,
+                                      "state_id" => self::EMAIL_STATE_VERIFIED
+                                  )
+                              )
+                          ));
+                          try {
+                              $result = json_decode($result, true);
+                          } catch (Exception $e) {
+                              die(fmtError($e->getMessage()));
+                          }
+                          if ($result && count($result) > 2) {
+                              $result = api(array(
+                                  "cmd" => "read",
+                                  "param" => array(
+                                      "table" => "liam3_user_email",
+                                      "filter" => '{"=":["liam3_email_text","'.$email.'"]}'
+                                  )
+                              ));
+                              $result = json_decode($result, true);
+                              // Set user state to complete if email is verified and firstname and lastname set
+                              if ($result['records'][0]['liam3_User_id_fk_164887']['state_id'] == self::USER_STATE_INCOMPLETE && $result['records'][0]['liam3_User_id_fk_164887']['liam3_User_firstname'] && $result['records'][0]['liam3_User_id_fk_164887']['liam3_User_lastname']) {
+                                  api(array(
+                                      "cmd" => "makeTransition",
+                                      "param" => array(
+                                          "table" => "liam3_user",
+                                          "row" => array(
+                                              "liam3_User_id" => $result['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'],
+                                              "state_id" => self::USER_STATE_COMPLETE
+                                          )
+                                      )
+                                  ));
+                              }
+                              $result = [
+                                  "message" => 'Success.'
+                              ];
+                              return json_encode($result, true);
+                          } else {
+                              die(fmtError('This email is already verified or blocked.'));
+                          }
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function changePassword($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("everything", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $user_id = $param["user_id"];
+                      $password_old = $param["password_old"];
+                      $password_new = $param["password_new"];
+                      $password_new_confirm = $param["password_new_confirm"];
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_user",
+                              "row" => array(
+                                  "liam3_User_id" => $user_id,
+                                  "state_id" => self::USER_STATE_UPDATE
+                              )
+                          )
+                      ));
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_user",
+                              "row" => array(
+                                  "liam3_User_id" => $user_id,
+                                  "liam3_User_password_old" => $password_old,
+                                  "liam3_User_password_new" => $password_new,
+                                  "liam3_User_password_new_confirm" => $password_new_confirm,
+                                  "state_id" => self::USER_STATE_COMPLETE
+                              )
+                          )
+                      ));
+                      $result = json_decode($result, true);
+                      if (count($result) > 2 && $result[1]['change_password']) {
+                          $result = [
+                              "message" => 'Password changed succesfully'
+                          ];
+                          return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[1]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function selectEmail($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("everything", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $user_email_id = $param["user_email_id"];
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_user_email",
+                              "row" => [
+                                  "liam3_User_email_id" => $user_email_id,
+                                  "state_id" => self::USER_EMAIL_STATE_USE
+                              ]
+                          )
+                      ));
+                      try {
+                          $result = json_decode($result, true);
+                      } catch (Exception $e) {
+                          die(fmtError($e->getMessage()));
+                      }
+                      if (count($result) > 2) {
+                          $result = [
+                              "message" => 'Email successfully selected.'
+                          ];
+                          return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function unselectEmail($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("everything", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $user_email_id = $param["user_email_id"];
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_user_email",
+                              "row" => [
+                                  "liam3_User_email_id" => $user_email_id,
+                                  "state_id" => self::USER_EMAIL_STATE_UNSELECTED
+                              ]
+                          )
+                      ));
+                      try {
+                          $result = json_decode($result, true);
+                      } catch (Exception $e) {
+                          die(fmtError($e->getMessage()));
+                      }
+                      if (count($result) > 2) {
+                          $result = [
+                              "message" => 'Email successfully unselected.'
+                          ];
+                          return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
+
+      /**
+       * @param $param
+       * @return string
+       */
+      public function deleteEmail($param)
+      {
+          //-- Check Rights
+          if (!is_null($this->token)) {
+              // User or NOT ?
+              if (property_exists($this->token, "permissions")) {
+                  $permissions = $this->token->permissions;
+                  if (in_array("everything", $permissions)) {
+                      $param = json_decode(json_encode($param), true); // Hack ==> TODO: Remove!
+                      $email_id = $param["email_id"];
+                      $result = api(array(
+                          "cmd" => "read",
+                          "param" => array(
+                              "table" => "liam3_email",
+                              "filter" => '{"=":["liam3_email_id", '.$email_id.']}'
+                          )
+                      ));
+                      try {
+                          $result = json_decode($result, true);
+                      } catch (Exception $e) {
+                          die(fmtError($e->getMessage()));
+                      }
+                      $result = $result['records'];
+                      if (!$result) die(fmtError('Wrong email'));
+                      $result = api(array(
+                          "cmd" => "makeTransition",
+                          "param" => array(
+                              "table" => "liam3_email",
+                              "row" => [
+                                  "liam3_email_id" => $email_id,
+                                  "liam3_email_text" => $result[0]['liam3_email_text'],
+                                  "state_id" => self::EMAIL_STATE_DELETED
+                              ]
+                          )
+                      ));
+                      try {
+                          $result = json_decode($result, true);
+                      } catch (Exception $e) {
+                          die(fmtError($e->getMessage()));
+                      }
+                      if (count($result) > 2) {
+                          $result = [
+                              "message" => $result[1]['message']
+                          ];
+                          return json_encode($result, true);
+                      } else {
+                          die(fmtError($result[0]['message']));
+                      }
+                  }
+              }
+          }
+          die(fmtError('No access!'));
+      }
   }
 
   class DataImporter {
@@ -931,7 +1823,7 @@
     private function walk($x, $k=null, $layer=-1, &$path=[], $outLog = "") {
       if (is_array($x)) {
         //---> Relation
-        $layer++;                
+        $layer++;
         foreach ($x as $key => $value)
           $this->walk($value, $k, $layer, $path, $outLog);
       }
@@ -966,7 +1858,7 @@
           $path = array_slice($path, 0, $layer + 1);
           // Build the create Path
           $leaf = $k."/create";
-          $path[$layer] = $leaf;                    
+          $path[$layer] = $leaf;
           $pathStr = implode('/', $path);
           //echo "---> $pathStr\n";
           //====> CREATE and relate Object

@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set actual User
     const router = new Router(routes, document.getElementById('app'));
     const elemUser = document.getElementById('username');
-    elemUser.innerText = config.user.firstname + ' ' + config.user.lastname;
+    //elemUser.innerText = config.user.firstname + ' ' + config.user.lastname;
     elemUser.setAttribute('title', 'UserID: ' + config.user.uid);
     // Set Table Links
     Object.keys(config.tables).forEach(tname => {
