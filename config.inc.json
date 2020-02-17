@@ -47,7 +47,7 @@
         "table_alias": "Loginattempts",
         "table_type": "obj",
         "order": 2,
-        "mode": "rw",
+        "mode": "ro",
         "stdfilter": "",
         "stdsorting": "liam3_LoginAttempts_id,DESC",
         "in_menu": true,

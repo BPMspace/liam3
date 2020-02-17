@@ -748,8 +748,12 @@ class Table {
             header.classList.add('mt-3');
         if (this.selectedRows.length > 0 && !this.isExpanded)
             return header;
-        if (this.ReadOnly && this.actRowCount < self.PageLimit)
+        if (this.ReadOnly && this.actRowCount < self.PageLimit) {
+            if (this.SM && this.options.showWorkflowButton) {
+                header.appendChild(this.getWorkflowButton());
+            }
             return header;
+        }
         if (this.options.showSearch) {
             const searchBar = this.getSearchBar();
             header.appendChild(searchBar);
@@ -962,6 +966,21 @@ class Table {
                     editBtn.addEventListener('click', () => {
                         const modForm = new Form(self, row);
                         wrapper.parentElement.replaceWith(modForm.getForm());
+                        if (self.tablename == 'liam3_email') {
+                            const emailRelationData = { table: 'liam3_user_email', limit: 1, filter: '{"=":["liam3_email_id_fk_396224", ' + row.liam3_email_id + ']}' };
+                            DB.request('read', emailRelationData, r => {
+                                if (r.count == 0) {
+                                    var textForEmailRelation = 'This Email is free.';
+                                } else {
+                                    const user = r.records[0].liam3_User_id_fk_164887;
+                                    var textForEmailRelation = 'This Email is related to user: ' + user.liam3_User_firstname + ' ' + user.liam3_User_lastname;
+                                }
+                                const emailRelatedElement = document.createElement('p');
+                                emailRelatedElement.innerText = textForEmailRelation;
+                                const referenceElement = document.getElementById("inp_liam3_email_text");
+                                referenceElement.parentNode.insertBefore(emailRelatedElement, referenceElement.nextSibling);
+                            });
+                        }
                     });
                     td.appendChild(editBtn);
                 }

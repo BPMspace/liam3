@@ -24,18 +24,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set Table Links
     Object.keys(config.tables).forEach(tname => {
       // Render only if in Menu
-      if (config.tables[tname].in_menu) {
-        //--> Create Link
-        const tmpBtn = document.createElement('a');
-        document.getElementById('sidebar-links').appendChild(tmpBtn);
-        tmpBtn.setAttribute('class', 'list-group-item list-group-item-action link-'+tname);
-        tmpBtn.setAttribute('href', '#/' + tname);
-        tmpBtn.addEventListener('click', () => {
-          if (tmpBtn.getAttribute('href') === window.location.hash)
-            router.navigate(window.location.hash.substr(1));
-        })
-        tmpBtn.innerHTML = config.tables[tname].table_icon + `<span class="ml-2">${config.tables[tname].table_alias}</span>`;
-      }
+        if (tname.indexOf('state') !== -1) {
+          const userRoleData = { table: 'role_user', limit: 1, filter: '{"=":["user_id", ' + config.user.uid + ']}' };
+          DB.request('read', userRoleData, r => {
+            if (r.records[0].role_id.role_id == 1) {
+              if (config.tables[tname].in_menu) {
+                  //--> Create Link
+                  const tmpBtn = document.createElement('a');
+                  document.getElementById('sidebar-links').appendChild(tmpBtn);
+                  tmpBtn.setAttribute('class', 'list-group-item list-group-item-action link-'+tname);
+                  tmpBtn.setAttribute('href', '#/' + tname);
+                  tmpBtn.addEventListener('click', () => {
+                      if (tmpBtn.getAttribute('href') === window.location.hash)
+                  router.navigate(window.location.hash.substr(1));
+              })
+                  tmpBtn.innerHTML = config.tables[tname].table_icon + `<span class="ml-2">${config.tables[tname].table_alias}</span>`;
+              }
+            }
+          });
+        } else {
+          if (config.tables[tname].in_menu) {
+              //--> Create Link
+              const tmpBtn = document.createElement('a');
+              document.getElementById('sidebar-links').appendChild(tmpBtn);
+              tmpBtn.setAttribute('class', 'list-group-item list-group-item-action link-'+tname);
+              tmpBtn.setAttribute('href', '#/' + tname);
+              tmpBtn.addEventListener('click', () => {
+                  if (tmpBtn.getAttribute('href') === window.location.hash)
+              router.navigate(window.location.hash.substr(1));
+          })
+              tmpBtn.innerHTML = config.tables[tname].table_icon + `<span class="ml-2">${config.tables[tname].table_alias}</span>`;
+          }
+        }
     });
     //==========================================================
     // Happens after init

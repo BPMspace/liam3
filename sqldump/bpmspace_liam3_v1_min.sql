@@ -41,6 +41,30 @@ LOCK TABLES `liam3_user_email` WRITE;
 /*!40000 ALTER TABLE `liam3_user_email` ENABLE KEYS */; UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
+--
+-- Dumping data for table `role`
+--
+
+LOCK TABLES `role` WRITE;
+/*!40000 ALTER TABLE `role` DISABLE KEYS */; INSERT INTO `role` VALUES (1, 'LIAM3_admin');
+/*!40000 ALTER TABLE `role` ENABLE KEYS */; UNLOCK TABLES;
+
+--
+-- Dumping data for table `role`
+--
+
+LOCK TABLES `role` WRITE;
+/*!40000 ALTER TABLE `role` DISABLE KEYS */; INSERT INTO `role` VALUES (2, 'LIAM3_Users');
+/*!40000 ALTER TABLE `role` ENABLE KEYS */; UNLOCK TABLES;
+
+--
+-- Dumping data for table `role_user`
+--
+
+LOCK TABLES `role_user` WRITE;
+/*!40000 ALTER TABLE `role_user` DISABLE KEYS */; INSERT INTO `role_user` VALUES (1, 1, 4);
+/*!40000 ALTER TABLE `role_user` ENABLE KEYS */; UNLOCK TABLES;
+
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
