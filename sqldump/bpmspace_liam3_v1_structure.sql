@@ -1,6 +1,6 @@
 -- MySQL dump 10.16  Distrib 10.1.33-MariaDB, for Win32 (AMD64)
 --
--- Host: localhost    Database: liam3
+-- Host: localhost    Database: bpmspace_liam3_v1
 -- ------------------------------------------------------
 -- Server version	10.1.33-MariaDB
 
