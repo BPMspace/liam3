@@ -1,8 +1,8 @@
--- MySQL dump 10.16  Distrib 10.1.9-MariaDB, for Win32 (AMD64)
+-- MySQL dump 10.16  Distrib 10.1.33-MariaDB, for Win32 (AMD64)
 --
--- Host: localhost    Database: bpmspace_liam3_v1
+-- Host: localhost    Database: liam3
 -- ------------------------------------------------------
--- Server version	10.1.9-MariaDB
+-- Server version	10.1.33-MariaDB
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -76,7 +76,7 @@ CREATE TABLE `liam3_email` (
   PRIMARY KEY (`liam3_email_id`),
   KEY `state_id_60534bd2` (`state_id`),
   CONSTRAINT `state_id_60534bd2` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -114,7 +114,7 @@ CREATE TABLE `liam3_user` (
   PRIMARY KEY (`liam3_User_id`),
   KEY `state_id_38047781` (`state_id`),
   CONSTRAINT `state_id_38047781` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -136,7 +136,7 @@ CREATE TABLE `liam3_user_email` (
   CONSTRAINT `liam3_user_email_ibfk_1` FOREIGN KEY (`liam3_User_id_fk_164887`) REFERENCES `liam3_user` (`liam3_User_id`),
   CONSTRAINT `liam3_user_email_ibfk_2` FOREIGN KEY (`liam3_email_id_fk_396224`) REFERENCES `liam3_email` (`liam3_email_id`),
   CONSTRAINT `state_id_9c23c55f` FOREIGN KEY (`state_id`) REFERENCES `state` (`state_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -173,7 +173,7 @@ CREATE TABLE `role` (
   `role_name` varchar(45) DEFAULT NULL,
   `ConfigDiff` longtext,
   PRIMARY KEY (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2887 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -189,7 +189,9 @@ CREATE TABLE `role_user` (
   `user_id` bigint(20) NOT NULL,
   PRIMARY KEY (`role_user_id`),
   KEY `role_id_fk` (`role_id`),
-  CONSTRAINT `role_id_fk` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  KEY `role_user_user_idx` (`user_id`),
+  CONSTRAINT `role_id_fk` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `role_user_user` FOREIGN KEY (`user_id`) REFERENCES `liam3_user` (`liam3_User_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -314,4 +316,4 @@ CREATE TABLE `state_rules` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-11-18 10:15:29
+-- Dump completed on 2020-02-06 10:55:17
