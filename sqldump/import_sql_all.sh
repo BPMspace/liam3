@@ -1,5 +1,5 @@
 #!/bin/bash
-mysql -u bpmspace_liam3_v1 -p bpmspace_liam3_v1 < ./bpmspace_liam3_v1_structur.sql
-mysql -u bpmspace_liam3_v1 -p bpmspace_liam3_v1 < ./bpmspace_liam3_v1_statemachine.sql
-mysql -u bpmspace_liam3_v1 -p bpmspace_liam3_v1 < ./bpmspace_liam3_v1_min.sql 
-mysql -u bpmspace_liam3_v1 -p bpmspace_liam3_v1 < ./bpmspace_liam3_v1_diff.sql
+mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME < ./bpmspace_liam3_v1_structure.sql
+mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME < ./bpmspace_liam3_v1_statemachine.sql
+mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME < ./bpmspace_liam3_v1_min.sql 
+mysql -u $DB_USER -p$DB_PASSWORD -h $DB_HOST $DB_NAME < ./bpmspace_liam3_v1_diff.sql
