@@ -1,3 +1,3 @@
 FROM bpmspace/docker_bpmspace_base:production_server_master
 COPY . /var/www/html/
-RUN "echo /var/www/html/sqldump/import_sql_all.sh >> /scripts/commands.sh"
+RUN echo /var/www/html/sqldump/import_sql_all.sh >> /scripts/commands.sh
