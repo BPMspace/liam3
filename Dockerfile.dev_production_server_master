@@ -1,2 +1,3 @@
-FROM bpmspace/docker_bpmspace_base:production_server_master
-COPY . /var/www/html/
+FROM bpmspace/docker_bpmspace_base:development_server_master
+COPY . /var/www/html/liam3
+RUN "echo /var/www/html/liam3/sqldump/import_sql_all.sh >> /scripts/commands.sh"
