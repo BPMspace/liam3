@@ -3,4 +3,5 @@ COPY . /var/www/html/
 RUN echo chown -R root:root /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo chmod +x /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
-RUN /scripts/init.sh
+RUN echo /scripts/init.sh >> /usr/local/bin/docker-php-entrypoint
+
