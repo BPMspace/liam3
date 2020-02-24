@@ -3,4 +3,4 @@ COPY . /var/www/html/liam3
 RUN echo chown -R root:root /var/www/html/liam3/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo chmod +x /var/www/html/liam3/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo /var/www/html/liam3/sqldump/liam3/import_sql_all.sh >> /scripts/init.sh
-#ENTRYPOINT /scripts/init.sh
+RUN /scripts/init.sh
