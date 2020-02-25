@@ -26,6 +26,7 @@ RUN etcdctl version
 RUN echo touch /tmp/endentrypoint.log >> /usr/local/bin/docker-php-entrypoint
 # general 
 COPY . /var/www/html/
+RUN mkdir -p /scripts
 RUN touch /scripts/init.sh
 RUN chmod +x /scripts/init.sh
 RUN echo chown -R www-data:www-data /var/www/ >> /scripts/init.sh
