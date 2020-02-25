@@ -25,15 +25,15 @@ RUN rm -rf /tmp/etcd-download/
 RUN etcdctl version
 RUN echo touch /tmp/endentrypoint.log >> /usr/local/bin/docker-php-entrypoint
 # general 
-COPY . /var/www/html/
-RUN mkdir -p /scripts
-RUN touch /scripts/init.sh
-RUN chmod +x /scripts/init.sh
-RUN echo chown -R www-data:www-data /var/www/ >> /scripts/init.sh
-RUN echo find /var/www/ -type f -exec chmod 660 {} \; >> /scripts/init.sh
-RUN echo find /var/www/ -type d -exec chmod 770 {} \; >> /scripts/init.sh
-RUN echo chown -R root:root /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
-RUN echo chmod +x /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
-RUN echo /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
-RUN echo /scripts/init.sh >> /usr/local/bin/docker-php-entrypoint
-ENTRYPOINT ["docker-php-entrypoint"]
+# COPY . /var/www/html/
+#RUN mkdir -p /scripts
+#RUN touch /scripts/init.sh
+#RUN chmod +x /scripts/init.sh
+#RUN echo chown -R www-data:www-data /var/www/ >> /scripts/init.sh
+#RUN echo find /var/www/ -type f -exec chmod 660 {} \; >> /scripts/init.sh
+#RUN echo find /var/www/ -type d -exec chmod 770 {} \; >> /scripts/init.sh
+#RUN echo chown -R root:root /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
+#RUN echo chmod +x /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
+#RUN echo /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
+#RUN echo /scripts/init.sh >> /usr/local/bin/docker-php-entrypoint
+#ENTRYPOINT ["docker-php-entrypoint"]
