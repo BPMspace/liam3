@@ -1,6 +1,38 @@
-FROM bpmspace/docker_bpmspace_base:production_server_master
+FROM php:7.3.5-apache-stretch
+RUN docker-php-ext-install pdo_mysql mysqli
+RUN docker-php-ext-enable pdo_mysql mysqli
+RUN export DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y --no-install-recommends apt-utils
+RUN echo "postfix postfix/mailname string placeholder.hostname.com" | debconf-set-selections
+RUN echo "postfix postfix/main_mailer_type string 'Satellite system'" | debconf-set-selections
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y postfix
+RUN apt-get install -y openssh-client
+RUN apt-get install -y mysql-client
+RUN apt-get install -y mailutils
+RUN apt-get install -y libicu-dev
+RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) intl pdo_mysql bcmath mbstring exif gd
+RUN a2enmod rewrite
+RUN mkfifo /var/spool/postfix/public/pickup
+RUN curl -L https://storage.googleapis.com/etcd/v3.4.3/etcd-v3.4.3-linux-amd64.tar.gz -o /tmp/etcd-v3.4.3-linux-amd64.tar.gz
+RUN mkdir /tmp/etcd-download
+RUN tar xzvf /tmp/etcd-v3.4.3-linux-amd64.tar.gz -C /tmp/etcd-download --strip-components=1
+RUN rm -f /tmp/etcd-v3.4.3-linux-amd64.tar.gz
+RUN cp /tmp/etcd-download/etcdctl /usr/local/bin/
+RUN rm -rf /tmp/etcd-download/
+RUN etcdctl version
+RUN echo touch /tmp/endentrypoint.log >> /usr/local/bin/docker-php-entrypoint
+# general 
 COPY . /var/www/html/
+RUN touch /scripts/init.sh
+RUN chmod +x /scripts/init.sh
+RUN echo chown -R www-data:www-data /var/www/ >> /scripts/init.sh
+RUN echo find /var/www/ -type f -exec chmod 660 {} \; >> /scripts/init.sh
+RUN echo find /var/www/ -type d -exec chmod 770 {} \; >> /scripts/init.sh
 RUN echo chown -R root:root /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo chmod +x /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo /var/www/html/sqldump/import_sql_all.sh >> /scripts/init.sh
 RUN echo /scripts/init.sh >> /usr/local/bin/docker-php-entrypoint
+ENTRYPOINT ["docker-php-entrypoint"]
