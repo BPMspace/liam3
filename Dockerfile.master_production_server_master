@@ -23,7 +23,7 @@ RUN rm -f /tmp/etcd-v3.4.3-linux-amd64.tar.gz
 RUN cp /tmp/etcd-download/etcdctl /usr/local/bin/
 RUN rm -rf /tmp/etcd-download/
 RUN etcdctl version
-RUN echo touch /tmp/endentrypoint.log >> /usr/local/bin/docker-php-entrypoint
+# RUN echo touch /tmp/endentrypoint.log >> /usr/local/bin/docker-php-entrypoint
 # general 
 # COPY . /var/www/html/
 #RUN mkdir -p /scripts
