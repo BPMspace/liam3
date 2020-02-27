@@ -441,7 +441,7 @@
     //=======================================================
     // [GET] Reading
     public function init() {
-      $config = $this->getConfigByRoleID($this->token->uid);
+      $config = $this->getConfigByRoleID($this->token->liam3_user_id);
       $res = ["user" => $this->token, "tables" => $config];
       return json_encode($res);
     }
@@ -469,7 +469,7 @@
       //-- Check Rights (only for Table!)
       if (!is_null($tablename)) {
         if (!is_null($this->token)){
-          $allowedTablenames = array_keys($this->getConfigByRoleID($this->token->uid));
+          $allowedTablenames = array_keys($this->getConfigByRoleID($this->token->liam3_user_id));
           if (!in_array($tablename, $allowedTablenames)) die(fmtError('No access to this Table!'));        
         }
       }
@@ -952,6 +952,8 @@
                               */
                           }
 
+                          $role_user = json_decode(api(["cmd" => "read", "param" => ["table" => "role_user", "filter" => '{"=":["user_id","' . $user_id . '"]}']]), true);
+
                           // TODO: Create Token for Serices (LIAM, SQMS, COMS)
 
                           // Generate User-Token
@@ -959,7 +961,8 @@
                           $token_data['iss'] = "liam3";
                           $token_data['iat'] = time();
                           $token_data['permissions'] = ["everything"];
-                          $token_data['uid'] = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+                          $token_data['liam3_user_id'] = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+                          $token_data['liam3_user_role_id'] = $role_user['records'][0]['role_id']['role_id'];
                           $token = JWT::encode($token_data, AUTH_KEY);
 
                           $result = [
