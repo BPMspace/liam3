@@ -56,6 +56,6 @@
   }
   // Success
     $user = json_decode(api(array("cmd" => "read", "param" => array("table" => "liam3_user",
-    "filter" => '{"=":["liam3_User_id", "'.$token->uid.'"]}'))), true);
+    "filter" => '{"=":["liam3_User_id", "'.$token->liam3_user_id.'"]}'))), true);
     $user = $user["records"][0];
     require_once(__DIR__.'/content.inc.php');
