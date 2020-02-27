@@ -875,9 +875,6 @@
     }
       public function login($param)
       {
-          /*define('EMAIL_STATE_VERIFIED', 2);
-          define('USER_STATE_COMPLETE', 10);
-          define('USER_EMAIL_STATE_USE', 13);*/
           //-- Check Rights
           if (!is_null($this->token)) {
               // User or NOT ?
@@ -898,59 +895,157 @@
                           if ($tMail[0]['state_id'] == self::EMAIL_STATE_VERIFIED) {
                               $email_id = $tMail[0]['liam3_email_id'];
                           } else {
-                              $error = 'Email is not verified';
-                              /*
-                              TODO: Login Attempts function
+                              $error = 'Email is not verified.';
                               $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
-                              $result = api(json_encode(array(
-                                      "cmd" => "create",
-                                      "param" => array(
-                                          "table" => "liam3_LoginAttempts",
-                                          "row" => array(
-                                              "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
-                                              "liam3_LoginAttempts_info" => $login_attempt_info
-                                          )
+                              api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_loginattempts",
+                                      "row" => array(
+                                          "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                          "liam3_LoginAttempts_info" => $login_attempt_info
                                       )
                                   )
-                              ));*/
+                              ));
                               die(fmtError($error));
                           }
                           //Check if email is connected with a user
                           $email_user = json_decode(api(["cmd" => "read", "param" => ["table" => "liam3_user_email", "filter" => '{"=":["liam3_email_text","' . $email . '"]}']]), true);
-                          if ($email_user && ($email_user['records'][0]['state_id'] == self::USER_EMAIL_STATE_USE)) {
+                          if (!$email_user['count']) {
+                              $error = 'This email is not connected with a user.';
+                              $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                              api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_loginattempts",
+                                      "row" => array(
+                                          "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                          "liam3_LoginAttempts_info" => $login_attempt_info
+                                      )
+                                  )
+                              ));
+                              die(fmtError($error));
+                          } elseif ($email_user['records'][0]['state_id'] != self::USER_EMAIL_STATE_USE) {
+                              $user_id = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+                              $error = 'This email is unselected.';
+                              $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                              $result = json_decode(api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_loginattempts",
+                                      "row" => array(
+                                          "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                          "liam3_LoginAttempts_info" => $login_attempt_info
+                                      )
+                                  )
+                              )), true);
+                              api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_user_loginattempt",
+                                      "row" => array(
+                                          "liam3_User_id_fk_955788" => $user_id,
+                                          "liam3_LoginAttempts_id_fk_234561" => $result[1]['element_id']
+                                      )
+                                  )
+                              ));
+                              die(fmtError($error));
+                          } else {
+                              $user_id = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
+                          }
+                          /*if ($email_user && ($email_user['records'][0]['state_id'] == self::USER_EMAIL_STATE_USE)) {
                               $user_id = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_id'];
                           } else {
                               $error = 'This email is unselected.';
-                              die(fmtError($error));
                               $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
-                          }
+                              api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_loginattempts",
+                                      "row" => array(
+                                          "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                          "liam3_LoginAttempts_info" => $login_attempt_info
+                                      )
+                                  )
+                              ));
+                              die(fmtError($error));
+                          }*/
                           //Check the user state
                           if (($email_user['records'][0]['liam3_User_id_fk_164887']['state_id'] != self::USER_STATE_COMPLETE)) {
-                              $error = 'The state of this user is not complete';
-                              die(fmtError($error));
+                              $error = 'The state of this user is not complete.';
                               $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                              $result = json_decode(api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_loginattempts",
+                                      "row" => array(
+                                          "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                          "liam3_LoginAttempts_info" => $login_attempt_info
+                                      )
+                                  )
+                              )), true);
+                              api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_user_loginattempt",
+                                      "row" => array(
+                                          "liam3_User_id_fk_955788" => $user_id,
+                                          "liam3_LoginAttempts_id_fk_234561" => $result[1]['element_id']
+                                      )
+                                  )
+                              ));
+                              die(fmtError($error));
                           }
                           //Check if password is correct.
                           $salt = $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_salt'];
                           $hashedPassword = hash('sha512', $password . $salt);
                           if ($hashedPassword != $email_user['records'][0]['liam3_User_id_fk_164887']['liam3_User_password']) {
                               $error = 'Wrong password.';
-                              die(fmtError($error));
                               $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
-                              /*
-                              api(json_encode(array(
-                                      "cmd" => "create",
-                                      "param" => array(
-                                          "table" => "liam3_LoginAttempts",
-                                          "row" => array(
-                                              "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
-                                              "liam3_LoginAttempts_info" => $login_attempt_info
-                                          )
+                              $result = json_decode(api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_loginattempts",
+                                      "row" => array(
+                                          "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                          "liam3_LoginAttempts_info" => $login_attempt_info
+                                      )
+                                  )
+                              )), true);
+                              api(array(
+                                  "cmd" => "create",
+                                  "param" => array(
+                                      "table" => "liam3_user_loginattempt",
+                                      "row" => array(
+                                          "liam3_User_id_fk_955788" => $user_id,
+                                          "liam3_LoginAttempts_id_fk_234561" => $result[1]['element_id']
                                       )
                                   )
                               ));
-                              */
+                              die(fmtError($error));
                           }
+
+                          $login_attempt_info = 'Successful - ' . $email;
+                          $result = json_decode(api(array(
+                              "cmd" => "create",
+                              "param" => array(
+                                  "table" => "liam3_loginattempts",
+                                  "row" => array(
+                                      "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                      "liam3_LoginAttempts_info" => $login_attempt_info
+                                  )
+                              )
+                          )), true);
+                          api(array(
+                              "cmd" => "create",
+                              "param" => array(
+                                  "table" => "liam3_user_loginattempt",
+                                  "row" => array(
+                                      "liam3_User_id_fk_955788" => $user_id,
+                                      "liam3_LoginAttempts_id_fk_234561" => $result[1]['element_id']
+                                  )
+                              )
+                          ));
 
                           $role_user = json_decode(api(["cmd" => "read", "param" => ["table" => "role_user", "filter" => '{"=":["user_id","' . $user_id . '"]}']]), true);
 
@@ -974,7 +1069,19 @@
 
 
                       } else
-                          die(fmtError('Mail does not exist!'));
+                          $error = 'Mail does not exist!';
+                          $login_attempt_info = 'Not Successful - ' . $email . ' - ' . $error;
+                          api(array(
+                              "cmd" => "create",
+                              "param" => array(
+                                  "table" => "liam3_loginattempts",
+                                  "row" => array(
+                                      "liam3_LoginAttempts_time" => date('Y-m-d H:i'),
+                                      "liam3_LoginAttempts_info" => $login_attempt_info
+                                  )
+                              )
+                          ));
+                          die(fmtError($error));
                   }
               }
           }

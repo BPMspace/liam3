@@ -1,4 +1,14 @@
 <?php
+api(array(
+    "cmd" => "create",
+    "param" => array(
+        "table" => "role_user",
+        "row" => array(
+            "role_id" => 2,
+            "user_id" => $param['row']['liam3_User_id']
+        )
+    )
+));
 	//echo "---TRANSITION--->";
 
 	// [Hash Password]
